@@ -1,87 +1,103 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Layers, DollarSign, Sparkles } from 'lucide-react'
-import { Step } from "@/lib/types"
+import { Layers, DollarSign, Sparkles, ChevronDown, ChevronRight, ChevronUp, Database, Cpu, Rocket, LineChart, CheckCircle2, Zap } from 'lucide-react'
+import { StepConfig } from "@/lib/types"
+import { TrustedTicker } from "./trusted-ticker"
 
 interface LeftPanelContentProps {
-  step: Step
+  step: StepConfig
+}
+
+const icons: { [key: string]: any } = {
+  Layers,
+  DollarSign,
+  Sparkles,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Database,
+  Cpu,
+  Rocket,
+  LineChart,
+  CheckCircle2,
+  Zap
 }
 
 export function LeftPanelContent({ step }: LeftPanelContentProps) {
-  if (step === 1) {
+  if (step.panelType === 'main') {
+    const content = step.panelContent as any
     return (
       <div className="space-y-12">
-        <h2 className="text-3xl font-bold leading-tight text-white">
-          Train faster, cheaper models on production data
+        <h2 className="text-4xl font-bold leading-tight text-white">
+          {content.headline}
         </h2>
         <ul className="space-y-6 text-white">
-          <li className="flex items-center gap-4">
-            <Layers className="h-5 w-5 stroke-[1.5]" />
-            <span className="text-lg">Train & deploy fine-tuned models</span>
-          </li>
-          <li className="flex items-center gap-4">
-            <DollarSign className="h-5 w-5 stroke-[1.5]" />
-            <span className="text-lg">Save time and money</span>
-          </li>
-          <li className="flex items-center gap-4">
-            <Sparkles className="h-5 w-5 stroke-[1.5]" />
-            <span className="text-lg">Get higher quality than OpenAI</span>
-          </li>
+          {content.valueProps.map((prop: any, index: number) => {
+            const Icon = icons[prop.icon]
+            return (
+              <li key={index} className="flex items-center gap-4">
+                {Icon && <Icon className="h-5 w-5 stroke-[1.5]" />}
+                <span className="text-lg">{prop.text}</span>
+              </li>
+            )
+          })}
         </ul>
-        <div className="pt-8">
-          <p className="text-sm mb-6 text-white/80">Trusted by engineers at:</p>
-          <div className="flex items-center gap-8">
-            <span className="text-white/90 text-lg">visualping</span>
-            <span className="text-white/90 text-lg">Rakuten</span>
-            <span className="text-white/90 text-lg">FATHOM</span>
+        {content.trustedByLogos?.length > 0 && (
+          <div className="pt-8">
+            <p className="text-sm mb-6 text-white/80">Trusted by engineers at:</p>
+            <TrustedTicker logos={content.trustedByLogos} />
           </div>
-        </div>
+        )}
       </div>
     )
   }
 
-  if (step === 2) {
+  if (step.panelType === 'value-props') {
+    const content = step.panelContent as any
     return (
       <div className="space-y-8">
-        <h2 className="text-3xl font-bold text-white">Why use OpenPipe?</h2>
+        <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
         <div className="space-y-4">
-          <div className="bg-white/10 p-6 rounded-xl">
-            <div>
-              <p className="text-3xl font-bold text-white">14x</p>
-              <p className="text-white/90 text-lg">Cheaper than GPT-4 Turbo</p>
-            </div>
-          </div>
-          <div className="bg-white/10 p-6 rounded-xl">
-            <div>
-              <p className="text-3xl font-bold text-white">5min</p>
-              <p className="text-white/90 text-lg">To start collecting training data</p>
-            </div>
-          </div>
-          <div className="bg-white/10 p-6 rounded-xl">
-            <div>
-              <p className="text-3xl font-bold text-white">$7M</p>
-              <p className="text-white/90 text-lg">Saved by our customers this year</p>
-            </div>
-          </div>
+          {content.stats.map((stat: any, index: number) => {
+            const Icon = stat.icon ? icons[stat.icon] : null
+            return (
+              <div key={index} className="bg-white/10 p-6 rounded-xl">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-3xl font-bold text-white">{stat.value}</p>
+                    <p className="text-white/90 text-lg">{stat.label}</p>
+                  </div>
+                  {Icon && <Icon className="h-6 w-6 text-white/80" />}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
   }
 
-  if (step === 3) {
+  if (step.panelType === 'testimonial') {
+    const content = step.panelContent as any
     return (
       <div className="space-y-8">
-        <h2 className="text-3xl font-bold text-white">What our users say</h2>
+        <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
         <div className="bg-white/10 p-6 rounded-xl">
-          <p className="text-lg text-white mb-6">
-            "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x. It's a no-brainer for any company that uses LLMs in prod."
-          </p>
+          <p className="text-lg text-white mb-6">{content.quote}</p>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white/20" />
+            {content.author.avatar ? (
+              <img
+                src={content.author.avatar}
+                alt={content.author.name}
+                className="w-12 h-12 rounded-full"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-white/20" />
+            )}
             <div>
-              <p className="font-bold text-white">David Paffenholz</p>
-              <p className="text-sm text-white/80">CEO & Co-founder • Juicebox</p>
+              <p className="font-bold text-white">{content.author.name}</p>
+              <p className="text-sm text-white/80">{content.author.title}</p>
             </div>
           </div>
         </div>
@@ -89,17 +105,78 @@ export function LeftPanelContent({ step }: LeftPanelContentProps) {
     )
   }
 
-  return (
-    <div className="space-y-8">
-      <h2 className="text-3xl font-bold text-white">
-        Your datasets, models and evaluations in one place.
-      </h2>
-      <ul className="space-y-4 text-lg text-white">
-        <li>• Capture Data</li>
-        <li>• Train Models</li>
-        <li>• Automatic Deployment</li>
-        <li>• Evaluate & Compare</li>
-      </ul>
-    </div>
-  )
+  if (step.panelType === 'features') {
+    const content = step.panelContent as any
+    return (
+      <div className="space-y-8">
+        <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
+        <div className="space-y-4">
+          {content.features.map((feature: any, index: number) => {
+            const Icon = icons[feature.icon]
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white/10 p-6 rounded-xl"
+              >
+                <div className="flex items-start gap-4">
+                  {Icon && <Icon className="h-6 w-6 text-white/90 mt-1" />}
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                    <p className="text-white/80">{feature.description}</p>
+                  </div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  if (step.panelType === 'success') {
+    const content = step.panelContent as any
+    return (
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto"
+          >
+            <CheckCircle2 className="h-8 w-8 text-white" />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <h2 className="text-3xl font-bold text-white mb-2">{content.headline}</h2>
+            <p className="text-white/80 text-lg">{content.subheadline}</p>
+          </motion.div>
+        </div>
+        <div className="space-y-4">
+          {content.features.map((feature: any, index: number) => {
+            const Icon = icons[feature.icon]
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center gap-3 text-white"
+              >
+                {Icon && <Icon className="h-5 w-5" />}
+                <span>{feature.title}</span>
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  return null
 }

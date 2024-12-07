@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { type FormData, type SignupModalProps, type Step } from "@/lib/types"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Monitor, Smartphone } from "lucide-react"
 import { LeftPanelContent } from "./left-panel-content"
 import { FormSteps } from "./form-steps"
 
-const STEPS = 4
+const STEPS = 5
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -36,8 +36,99 @@ const colors = {
   purple: "#9333ea"
 }
 
-export function SignupModal({ open, onOpenChange }: SignupModalProps) {
+const defaultConfig = {
+  steps: [
+    {
+      headline: "Let's get started",
+      subheadline: "Please answer a few questions so we can create your account.",
+      panelType: "main",
+      panelContent: {
+        headline: "Train faster, cheaper models on production data",
+        valueProps: [
+          { icon: "Layers", text: "Train & deploy fine-tuned models" },
+          { icon: "DollarSign", text: "Save time and money" },
+          { icon: "Sparkles", text: "Get higher quality than OpenAI" }
+        ],
+        trustedByLogos: []
+      },
+      fields: []
+    },
+    {
+      headline: "Which model(s) do you currently use in production?",
+      subheadline: "You can select multiple options.",
+      panelType: "value-props",
+      panelContent: {
+        headline: "Why use OpenPipe?",
+        stats: [
+          { value: "14x", label: "Cheaper than GPT-4 Turbo", icon: "ChevronDown" },
+          { value: "5min", label: "To start collecting training data", icon: "ChevronRight" },
+          { value: "$7M", label: "Saved by our customers this year", icon: "ChevronUp" }
+        ]
+      },
+      fields: []
+    },
+    {
+      headline: "About how many LLM calls does your project make per day?",
+      subheadline: "",
+      panelType: "testimonial",
+      panelContent: {
+        headline: "What our users say",
+        quote: "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x. It's a no-brainer for any company that uses LLMs in prod.",
+        author: {
+          name: "David Paffenholz",
+          title: "CEO & Co-founder • Juicebox"
+        }
+      },
+      fields: []
+    },
+    {
+      headline: "Anything else?",
+      subheadline: "",
+      panelType: "features",
+      panelContent: {
+        headline: "Your AI Infrastructure Platform",
+        features: [
+          {
+            title: "Data Collection & Processing",
+            description: "Automatically collect and process your production data",
+            icon: "Database"
+          },
+          {
+            title: "Model Training & Fine-tuning",
+            description: "Train custom models on your specific use cases",
+            icon: "Cpu"
+          },
+          {
+            title: "Automated Deployment",
+            description: "Deploy models with zero-downtime updates",
+            icon: "Rocket"
+          }
+        ]
+      },
+      fields: []
+    },
+    {
+      headline: "Thanks!",
+      subheadline: "We'll be in touch shortly.",
+      panelType: "success",
+      panelContent: {
+        headline: "You're all set!",
+        subheadline: "We'll reach out soon with next steps",
+        features: [
+          { title: "Access to dashboard", icon: "Layers" },
+          { title: "Training data collection", icon: "Database" },
+          { title: "Model deployment tools", icon: "Rocket" },
+          { title: "Performance analytics", icon: "LineChart" }
+        ]
+      },
+      fields: []
+    }
+  ]
+}
+
+export function SignupModal({ open, onOpenChange, config = defaultConfig }: SignupModalProps) {
   const [step, setStep] = useState<Step>(1)
+  const [isMobile, setIsMobile] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     email: "",
     firstName: "",
@@ -50,6 +141,7 @@ export function SignupModal({ open, onOpenChange }: SignupModalProps) {
 
   const progress = (step / STEPS) * 100
   const currentColor = step % 2 === 0 ? colors.purple : colors.orange
+  const currentStep = config.steps[step - 1]
 
   const handleNext = () => {
     if (step < STEPS) {
@@ -65,10 +157,9 @@ export function SignupModal({ open, onOpenChange }: SignupModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (step === STEPS) {
-      // Handle form submission
+    if (step === STEPS - 1) {
       console.log(formData)
-      onOpenChange(false)
+      handleNext()
     } else {
       handleNext()
     }
@@ -76,8 +167,8 @@ export function SignupModal({ open, onOpenChange }: SignupModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1200px] p-0 overflow-hidden">
-        <div className="grid sm:grid-cols-2 min-h-[600px]">
+      <DialogContent className={`p-0 overflow-hidden ${isMobile ? "max-w-[420px]" : "max-w-[1200px]"}`}>
+        <div className={`grid ${isMobile ? "" : "sm:grid-cols-2"} min-h-[600px]`}>
           <div 
             className="relative overflow-hidden transition-colors duration-300 ease-in-out"
             style={{ backgroundColor: currentColor }}
@@ -91,9 +182,9 @@ export function SignupModal({ open, onOpenChange }: SignupModalProps) {
                 animate="center"
                 exit="exit"
                 transition={transition}
-                className="absolute inset-0 p-12"
+                className="absolute inset-0 p-16"
               >
-                <LeftPanelContent step={step} />
+                {currentStep && <LeftPanelContent step={currentStep} />}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -101,7 +192,7 @@ export function SignupModal({ open, onOpenChange }: SignupModalProps) {
             <div className="space-y-8">
               <div className="flex items-center gap-4">
                 <AnimatePresence mode="wait">
-                  {step > 1 && (
+                  {step > 1 && step < STEPS && (
                     <motion.button
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -147,20 +238,40 @@ export function SignupModal({ open, onOpenChange }: SignupModalProps) {
                   />
                 </motion.div>
               </AnimatePresence>
-              <div className="flex justify-end pt-4">
-                <Button 
-                  type="submit"
-                  className="rounded-full px-8 py-6 text-lg"
-                  style={{ 
-                    backgroundColor: currentColor,
-                    color: "white"
-                  }}
-                >
-                  {step === STEPS ? "Submit" : "Continue"}
-                </Button>
-              </div>
+              {step < STEPS && (
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    type="submit"
+                    className="rounded-full px-8 py-6 text-lg"
+                    style={{ 
+                      backgroundColor: currentColor,
+                      color: "white"
+                    }}
+                  >
+                    {step === STEPS - 1 ? "Submit" : "Continue"}
+                  </Button>
+                </div>
+              )}
             </form>
           </div>
+        </div>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
+          <Button
+            variant={isMobile ? "ghost" : "secondary"}
+            size="sm"
+            onClick={() => setIsMobile(false)}
+            className="rounded-md"
+          >
+            <Monitor className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={isMobile ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setIsMobile(true)}
+            className="rounded-md"
+          >
+            <Smartphone className="w-4 h-4" />
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -3,7 +3,10 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FormData, Step } from "@/lib/types"
+import { motion } from "framer-motion"
 
 interface FormStepsProps {
   step: Step
@@ -168,37 +171,54 @@ export function FormSteps({ step, formData, setFormData, currentColor }: FormSte
     )
   }
 
+  if (step === 4) {
+    return (
+      <>
+        <h2 className="text-3xl font-bold text-gray-900">Anything else?</h2>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="source">How did you hear about us?</Label>
+            <Select
+              value={formData.source}
+              onValueChange={(value) => setFormData({ ...formData, source: value })}
+            >
+              <SelectTrigger className="rounded-full">
+                <SelectValue placeholder="Select an option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="twitter">Twitter</SelectItem>
+                <SelectItem value="linkedin">LinkedIn</SelectItem>
+                <SelectItem value="friend">Friend or colleague</SelectItem>
+                <SelectItem value="search">Search engine</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="comments">
+              Any additional comments or questions?
+            </Label>
+            <Textarea
+              id="comments"
+              value={formData.comments}
+              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
+              placeholder="Share your thoughts..."
+              className="rounded-xl min-h-[120px]"
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
   return (
-    <>
-      <h2 className="text-3xl font-bold text-gray-900">
-        What is the most important goal you hope to achieve through fine-tuning?
-      </h2>
-      <p className="text-gray-600 text-lg">
-        You can select multiple options.
-      </p>
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          "Lower cost",
-          "Lower latency",
-          "Higher response quality",
-          "Other",
-        ].map((goal) => (
-          <Button
-            key={goal}
-            type="button"
-            variant="outline"
-            onClick={() => {}}
-            className="justify-start rounded-full h-12 text-lg bg-white hover:bg-gray-50"
-            style={{
-              backgroundColor: goal === "Lower latency" ? currentColor : undefined,
-              color: goal === "Lower latency" ? "white" : undefined,
-              borderColor: goal === "Lower latency" ? currentColor : undefined
-            }}
-          >
-            {goal}
-          </Button>
-        ))}
-      </div>
-    </>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center space-y-4"
+    >
+      <h2 className="text-3xl font-bold text-gray-900">Thanks!</h2>
+      <p className="text-gray-600 text-lg">We'll be in touch shortly.</p>
+    </motion.div>
   )
 }
