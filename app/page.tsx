@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { SignupModal } from "@/components/signup/signup-modal"
-import { ModalBuilder } from "@/components/builder/modal-builder"
-import { ModalConfig } from "@/lib/types"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { SignupModal } from "@/components/signup/signup-modal";
+import { ModalBuilder } from "@/components/builder/modal-builder";
+import { ModalConfig } from "@/lib/types";
 
 const defaultConfig: ModalConfig = {
   headline: "Train faster, cheaper models on production data",
@@ -18,7 +18,8 @@ const defaultConfig: ModalConfig = {
   steps: [
     {
       headline: "Let's get started",
-      subheadline: "Please answer a few questions so we can create your account.",
+      subheadline:
+        "Please answer a few questions so we can create your account.",
       panelType: "main",
       panelContent: {
         headline: "Train faster, cheaper models on production data",
@@ -27,31 +28,31 @@ const defaultConfig: ModalConfig = {
           { icon: "DollarSign", text: "Save time and money" },
           { icon: "Sparkles", text: "Get higher quality than OpenAI" },
         ],
-        trustedByLogos: []
+        trustedByLogos: [],
       },
       fields: [
-        { 
+        {
           id: "email",
-          label: "Work Email", 
-          type: "email", 
-          required: true, 
-          fullWidth: true 
+          label: "Work Email",
+          type: "email",
+          required: true,
+          fullWidth: true,
         },
-        { 
+        {
           id: "firstName",
-          label: "First Name", 
-          type: "text", 
-          required: true, 
-          fullWidth: false 
+          label: "First Name",
+          type: "text",
+          required: true,
+          fullWidth: false,
         },
-        { 
+        {
           id: "lastName",
-          label: "Last Name", 
-          type: "text", 
-          required: true, 
-          fullWidth: false 
+          label: "Last Name",
+          type: "text",
+          required: true,
+          fullWidth: false,
         },
-      ]
+      ],
     },
     {
       headline: "Which model(s) do you currently use in production?",
@@ -60,10 +61,22 @@ const defaultConfig: ModalConfig = {
       panelContent: {
         headline: "Why use OpenPipe?",
         stats: [
-          { value: "14x", label: "Cheaper than GPT-4 Turbo", icon: "ChevronDown" },
-          { value: "5min", label: "To start collecting training data", icon: "ChevronRight" },
-          { value: "$7M", label: "Saved by our customers this year", icon: "ChevronUp" }
-        ]
+          {
+            value: "14x",
+            label: "Cheaper than GPT-4 Turbo",
+            icon: "ChevronDown",
+          },
+          {
+            value: "5min",
+            label: "To start collecting training data",
+            icon: "ChevronRight",
+          },
+          {
+            value: "$7M",
+            label: "Saved by our customers this year",
+            icon: "ChevronUp",
+          },
+        ],
       },
       fields: [
         {
@@ -72,9 +85,9 @@ const defaultConfig: ModalConfig = {
           type: "multi-select",
           required: true,
           fullWidth: true,
-          options: ["GPT-4", "GPT-3.5", "Claude", "Mixtral", "Gemini", "Other"]
-        }
-      ]
+          options: ["GPT-4", "GPT-3.5", "Claude", "Mixtral", "Gemini", "Other"],
+        },
+      ],
     },
     {
       headline: "About how many LLM calls does your project make per day?",
@@ -82,11 +95,12 @@ const defaultConfig: ModalConfig = {
       panelType: "testimonial",
       panelContent: {
         headline: "What our users say",
-        quote: "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x. It's a no-brainer for any company that uses LLMs in prod.",
+        quote:
+          "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x. It's a no-brainer for any company that uses LLMs in prod.",
         author: {
           name: "David Paffenholz",
-          title: "CEO & Co-founder • Juicebox"
-        }
+          title: "CEO & Co-founder • Juicebox",
+        },
       },
       fields: [
         {
@@ -100,10 +114,10 @@ const defaultConfig: ModalConfig = {
             "1,000 to 10,000",
             "10,000 to 50,000",
             "50,000 to 100,000",
-            "> 100,000"
-          ]
-        }
-      ]
+            "> 100,000",
+          ],
+        },
+      ],
     },
     {
       headline: "Almost done!",
@@ -114,9 +128,9 @@ const defaultConfig: ModalConfig = {
         valueProps: [
           { icon: "Layers", text: "Capture Data" },
           { icon: "DollarSign", text: "Train Models" },
-          { icon: "Sparkles", text: "Automatic Deployment" }
+          { icon: "Sparkles", text: "Automatic Deployment" },
         ],
-        trustedByLogos: []
+        trustedByLogos: [],
       },
       fields: [
         {
@@ -130,45 +144,35 @@ const defaultConfig: ModalConfig = {
             "LinkedIn",
             "Friend or colleague",
             "Search engine",
-            "Other"
-          ]
+            "Other",
+          ],
         },
         {
           id: "comments",
           label: "Any additional comments or questions?",
           type: "textarea",
           required: false,
-          fullWidth: true
-        }
-      ]
-    }
-  ]
-}
+          fullWidth: true,
+        },
+      ],
+    },
+  ],
+};
 
 export default function Home() {
-  const [config, setConfig] = useState<ModalConfig>(defaultConfig)
-  const [previewOpen, setPreviewOpen] = useState(false)
-  
+  const [config, setConfig] = useState<ModalConfig>(defaultConfig);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Signup Modal Builder</h1>
-          <Button 
-            onClick={() => setPreviewOpen(true)}
-            size="lg"
-            className="bg-black hover:bg-gray-900"
-          >
-            Preview Modal
-          </Button>
+        <h1 className="text-3xl font-bold mb-8">Signup Modal Builder</h1>
+        <div className="space-y-8">
+          <div className="bg-black/80 rounded-lg p-8 min-h-[700px] flex items-center justify-center">
+            <SignupModal open={true} onOpenChange={() => {}} config={config} />
+          </div>
+          <ModalBuilder config={config} onChange={setConfig} />
         </div>
-        <ModalBuilder config={config} onChange={setConfig} />
       </div>
-      <SignupModal 
-        open={previewOpen} 
-        onOpenChange={setPreviewOpen}
-        config={config}
-      />
     </div>
-  )
+  );
 }
