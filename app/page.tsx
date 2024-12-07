@@ -4,7 +4,83 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SignupModal } from "@/components/signup/signup-modal";
 import { ModalBuilder } from "@/components/builder/modal-builder";
-import { ModalConfig } from "@/lib/types";
+import { ModalConfig, StepConfig, Step } from "@/lib/types";
+
+const defaultPanelContent = {
+  main: {
+    headline: "Train faster, cheaper models on production data",
+    valueProps: [
+      { icon: "Layers", text: "Train & deploy fine-tuned models" },
+      { icon: "DollarSign", text: "Save time and money" },
+      { icon: "Sparkles", text: "Get higher quality than OpenAI" },
+    ],
+    trustedByLogos: [],
+  },
+  "value-props": {
+    headline: "Why use OpenPipe?",
+    stats: [
+      { value: "14x", label: "Cheaper than GPT-4 Turbo", icon: "ChevronDown" },
+      {
+        value: "5min",
+        label: "To start collecting training data",
+        icon: "ChevronRight",
+      },
+      {
+        value: "$7M",
+        label: "Saved by our customers this year",
+        icon: "ChevronUp",
+      },
+    ],
+  },
+  testimonial: {
+    headline: "What our users say",
+    quote:
+      "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x.",
+    author: {
+      name: "John Doe",
+      title: "CEO & Co-founder",
+      avatar: "",
+    },
+  },
+  features: {
+    headline: "Your AI Infrastructure Platform",
+    features: [
+      {
+        title: "Data Collection & Processing",
+        description: "Automatically collect and process your production data",
+        icon: "Database",
+      },
+      {
+        title: "Model Training & Fine-tuning",
+        description: "Train custom models on your specific use cases",
+        icon: "Cpu",
+      },
+      {
+        title: "Automated Deployment",
+        description: "Deploy models with zero-downtime updates",
+        icon: "Rocket",
+      },
+    ],
+  },
+  success: {
+    headline: "You're all set!",
+    subheadline: "We'll reach out soon with next steps",
+    features: [
+      { title: "Access to dashboard", icon: "Layers" },
+      { title: "Training data collection", icon: "Database" },
+      { title: "Model deployment tools", icon: "Rocket" },
+      { title: "Performance analytics", icon: "LineChart" },
+    ],
+  },
+};
+
+const defaultStep: StepConfig = {
+  headline: "New Step",
+  subheadline: "",
+  panelType: "main",
+  panelContent: defaultPanelContent.main,
+  fields: [],
+};
 
 const defaultConfig: ModalConfig = {
   headline: "Train faster, cheaper models on production data",
@@ -21,15 +97,7 @@ const defaultConfig: ModalConfig = {
       subheadline:
         "Please answer a few questions so we can create your account.",
       panelType: "main",
-      panelContent: {
-        headline: "Train faster, cheaper models on production data",
-        valueProps: [
-          { icon: "Layers", text: "Train & deploy fine-tuned models" },
-          { icon: "DollarSign", text: "Save time and money" },
-          { icon: "Sparkles", text: "Get higher quality than OpenAI" },
-        ],
-        trustedByLogos: [],
-      },
+      panelContent: defaultPanelContent.main,
       fields: [
         {
           id: "email",
@@ -58,29 +126,10 @@ const defaultConfig: ModalConfig = {
       headline: "Which model(s) do you currently use in production?",
       subheadline: "You can select multiple options.",
       panelType: "value-props",
-      panelContent: {
-        headline: "Why use OpenPipe?",
-        stats: [
-          {
-            value: "14x",
-            label: "Cheaper than GPT-4 Turbo",
-            icon: "ChevronDown",
-          },
-          {
-            value: "5min",
-            label: "To start collecting training data",
-            icon: "ChevronRight",
-          },
-          {
-            value: "$7M",
-            label: "Saved by our customers this year",
-            icon: "ChevronUp",
-          },
-        ],
-      },
+      panelContent: defaultPanelContent["value-props"],
       fields: [
         {
-          id: "models",
+          id: "currentModels",
           label: "Models",
           type: "multi-select",
           required: true,
@@ -93,18 +142,10 @@ const defaultConfig: ModalConfig = {
       headline: "About how many LLM calls does your project make per day?",
       subheadline: "",
       panelType: "testimonial",
-      panelContent: {
-        headline: "What our users say",
-        quote:
-          "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x. It's a no-brainer for any company that uses LLMs in prod.",
-        author: {
-          name: "David Paffenholz",
-          title: "CEO & Co-founder • Juicebox",
-        },
-      },
+      panelContent: defaultPanelContent.testimonial,
       fields: [
         {
-          id: "calls",
+          id: "dailyCalls",
           label: "Daily Calls",
           type: "select",
           required: true,
@@ -120,18 +161,10 @@ const defaultConfig: ModalConfig = {
       ],
     },
     {
-      headline: "Almost done!",
-      subheadline: "Just a few more details to help us serve you better.",
-      panelType: "main",
-      panelContent: {
-        headline: "Your datasets, models and evaluations in one place.",
-        valueProps: [
-          { icon: "Layers", text: "Capture Data" },
-          { icon: "DollarSign", text: "Train Models" },
-          { icon: "Sparkles", text: "Automatic Deployment" },
-        ],
-        trustedByLogos: [],
-      },
+      headline: "Anything else?",
+      subheadline: "How did you hear about us?",
+      panelType: "features",
+      panelContent: defaultPanelContent.features,
       fields: [
         {
           id: "source",
@@ -156,11 +189,19 @@ const defaultConfig: ModalConfig = {
         },
       ],
     },
+    {
+      headline: "Thanks!",
+      subheadline: "We'll be in touch shortly.",
+      panelType: "success",
+      panelContent: defaultPanelContent.success,
+      fields: [],
+    },
   ],
 };
 
 export default function Home() {
   const [config, setConfig] = useState<ModalConfig>(defaultConfig);
+  const [currentStep, setCurrentStep] = useState<Step>(1);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -168,12 +209,22 @@ export default function Home() {
         {/* Left side - Builder */}
         <div className="w-1/2 overflow-auto p-8 border-r">
           <h1 className="text-3xl font-bold mb-8">Signup Modal Builder</h1>
-          <ModalBuilder config={config} onChange={setConfig} />
+          <ModalBuilder
+            config={config}
+            onChange={setConfig}
+            currentStep={currentStep}
+            onStepChange={setCurrentStep}
+          />
         </div>
 
         {/* Right side - Preview */}
         <div className="w-1/2 bg-black/80 flex items-center justify-center overflow-auto">
-          <SignupModal open={true} onOpenChange={() => {}} config={config} />
+          <SignupModal
+            open={true}
+            onOpenChange={() => {}}
+            config={config}
+            initialStep={currentStep}
+          />
         </div>
       </div>
     </div>

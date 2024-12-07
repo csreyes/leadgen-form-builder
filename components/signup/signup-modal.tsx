@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { type FormData, type SignupModalProps, type Step } from "@/lib/types";
+import { type FormData, type Step, type ModalConfig } from "@/lib/types";
 import { ArrowLeft, Monitor, Smartphone } from "lucide-react";
 import { LeftPanelContent } from "./left-panel-content";
 import { FormSteps } from "./form-steps";
@@ -35,7 +35,15 @@ const colors = {
   purple: "#9333ea",
 };
 
-const defaultConfig = {
+const defaultConfig: ModalConfig = {
+  headline: "Train faster, cheaper models on production data",
+  valueProps: [
+    { icon: "Layers", text: "Train & deploy fine-tuned models" },
+    { icon: "DollarSign", text: "Save time and money" },
+    { icon: "Sparkles", text: "Get higher quality than OpenAI" },
+  ],
+  logo: "",
+  trustedByLogos: [],
   steps: [
     {
       headline: "Let's get started",
@@ -53,99 +61,23 @@ const defaultConfig = {
       },
       fields: [],
     },
-    {
-      headline: "Which model(s) do you currently use in production?",
-      subheadline: "You can select multiple options.",
-      panelType: "value-props",
-      panelContent: {
-        headline: "Why use OpenPipe?",
-        stats: [
-          {
-            value: "14x",
-            label: "Cheaper than GPT-4 Turbo",
-            icon: "ChevronDown",
-          },
-          {
-            value: "5min",
-            label: "To start collecting training data",
-            icon: "ChevronRight",
-          },
-          {
-            value: "$7M",
-            label: "Saved by our customers this year",
-            icon: "ChevronUp",
-          },
-        ],
-      },
-      fields: [],
-    },
-    {
-      headline: "About how many LLM calls does your project make per day?",
-      subheadline: "",
-      panelType: "testimonial",
-      panelContent: {
-        headline: "What our users say",
-        quote:
-          "OpenPipe increased our inference speed by 3x compared to GPT4-turbo while reducing cost by >10x. It's a no-brainer for any company that uses LLMs in prod.",
-        author: {
-          name: "David Paffenholz",
-          title: "CEO & Co-founder • Juicebox",
-        },
-      },
-      fields: [],
-    },
-    {
-      headline: "Anything else?",
-      subheadline: "",
-      panelType: "features",
-      panelContent: {
-        headline: "Your AI Infrastructure Platform",
-        features: [
-          {
-            title: "Data Collection & Processing",
-            description:
-              "Automatically collect and process your production data",
-            icon: "Database",
-          },
-          {
-            title: "Model Training & Fine-tuning",
-            description: "Train custom models on your specific use cases",
-            icon: "Cpu",
-          },
-          {
-            title: "Automated Deployment",
-            description: "Deploy models with zero-downtime updates",
-            icon: "Rocket",
-          },
-        ],
-      },
-      fields: [],
-    },
-    {
-      headline: "Thanks!",
-      subheadline: "We'll be in touch shortly.",
-      panelType: "success",
-      panelContent: {
-        headline: "You're all set!",
-        subheadline: "We'll reach out soon with next steps",
-        features: [
-          { title: "Access to dashboard", icon: "Layers" },
-          { title: "Training data collection", icon: "Database" },
-          { title: "Model deployment tools", icon: "Rocket" },
-          { title: "Performance analytics", icon: "LineChart" },
-        ],
-      },
-      fields: [],
-    },
   ],
 };
+
+interface SignupModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  config?: ModalConfig;
+  initialStep?: Step;
+}
 
 export function SignupModal({
   open,
   onOpenChange,
   config = defaultConfig,
+  initialStep = 1,
 }: SignupModalProps) {
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(initialStep);
   const [isMobile, setIsMobile] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: "",
@@ -156,6 +88,10 @@ export function SignupModal({
     source: "",
     comments: "",
   });
+
+  useEffect(() => {
+    setStep(initialStep);
+  }, [initialStep]);
 
   const progress = (step / STEPS) * 100;
   const currentColor = step % 2 === 0 ? colors.purple : colors.orange;
@@ -211,7 +147,7 @@ export function SignupModal({
             </motion.div>
           </AnimatePresence>
         </div>
-        <div className="p-10 bg-white overflow-hidden">
+        <div className="p-10 bg-white overflow-hidden flex flex-col">
           <div className="space-y-8">
             <div className="flex items-center gap-4">
               <AnimatePresence mode="wait">
@@ -246,7 +182,7 @@ export function SignupModal({
               <span className="text-xl font-semibold">OpenPipe</span>
             </div>
           </div>
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <form onSubmit={handleSubmit} className="mt-8 flex-1 flex flex-col">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`right-${step}`}
@@ -254,7 +190,7 @@ export function SignupModal({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-4"
+                className="space-y-4 flex-1 flex flex-col"
               >
                 <FormSteps
                   step={step}
@@ -265,7 +201,7 @@ export function SignupModal({
               </motion.div>
             </AnimatePresence>
             {step < STEPS && (
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-4 mt-auto">
                 <Button
                   type="submit"
                   className="rounded-full px-8 py-6 text-lg"
