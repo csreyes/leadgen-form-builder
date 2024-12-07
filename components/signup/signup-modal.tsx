@@ -128,30 +128,32 @@ export function SignupModal({
       } mx-auto relative`}
     >
       <div className={`grid ${isMobile ? "" : "sm:grid-cols-2"} min-h-[600px]`}>
-        <div
-          className="relative overflow-hidden transition-colors duration-300 ease-in-out"
-          style={{ backgroundColor: currentColor }}
-        >
-          <AnimatePresence custom={step} mode="popLayout" initial={false}>
-            <motion.div
-              key={step}
-              custom={step}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={transition}
-              className="absolute inset-0 p-16"
-            >
-              {currentStep && <LeftPanelContent step={currentStep} />}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        {!isMobile && (
+          <div
+            className="relative overflow-hidden transition-colors duration-300 ease-in-out"
+            style={{ backgroundColor: currentColor }}
+          >
+            <AnimatePresence custom={step} mode="popLayout" initial={false}>
+              <motion.div
+                key={step}
+                custom={step}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={transition}
+                className="absolute inset-0 p-16"
+              >
+                {currentStep && <LeftPanelContent step={currentStep} />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
         <div className="p-10 bg-white overflow-hidden flex flex-col">
           <div className="space-y-8">
             <div className="flex items-center gap-4">
               <AnimatePresence mode="wait">
-                {step > 1 && step < STEPS && (
+                {step > 1 && (
                   <motion.button
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -164,7 +166,11 @@ export function SignupModal({
                   </motion.button>
                 )}
               </AnimatePresence>
-              <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className={`h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden ${
+                  !isMobile ? "min-w-[482px]" : "min-w-[300px]"
+                }`}
+              >
                 <motion.div
                   className="h-full rounded-full"
                   style={{ backgroundColor: currentColor }}

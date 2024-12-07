@@ -29,19 +29,58 @@ export function FormSteps({
 }: FormStepsProps) {
   if (step === 5) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center flex-1 flex flex-col justify-center"
-      >
-        <h2 className="text-3xl font-bold text-gray-900">Thanks!</h2>
-        <p className="text-gray-600 text-lg">We'll be in touch shortly.</p>
-      </motion.div>
+      <div className="flex-1 flex flex-col w-full">
+        <div className="space-y-6 flex-1">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex-1 flex flex-col md:flex-row w-full"
+          >
+            <div className="hidden md:flex flex-1 bg-[#F26B3A] rounded-lg p-8 flex-col text-white mr-8">
+              <h2 className="text-3xl font-bold mb-8">
+                Your datasets, models and evaluations in one place.
+              </h2>
+              <div className="space-y-4">
+                <div className="bg-white/10 rounded-full px-6 py-3">
+                  Capture Data
+                </div>
+                <div className="bg-white/10 rounded-full px-6 py-3">
+                  Train Models
+                </div>
+                <div className="bg-white/10 rounded-full px-6 py-3">
+                  Automatic Deployment
+                </div>
+                <div className="bg-white/10 rounded-full px-6 py-3">
+                  Evaluate & Compare
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col justify-between items-center text-center md:bg-transparent bg-white">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Thanks!
+                </h2>
+                <p className="text-gray-600 text-lg mb-8">
+                  We'll be in touch shortly.
+                </p>
+              </div>
+              <Button
+                onClick={() => window.close()}
+                variant="default"
+                size="lg"
+                className="rounded-full mb-8"
+              >
+                Close Modal
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col w-full">
       <h2 className="text-3xl font-bold text-gray-900">
         {step === 1
           ? "Let's get started"
