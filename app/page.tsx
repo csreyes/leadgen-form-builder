@@ -164,13 +164,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-8">Signup Modal Builder</h1>
-        <div className="space-y-8">
-          <div className="bg-black/80 rounded-lg p-8 min-h-[700px] flex items-center justify-center">
-            <SignupModal open={true} onOpenChange={() => {}} config={config} />
-          </div>
+      <div className="h-screen flex">
+        {/* Left side - Builder */}
+        <div className="w-1/2 overflow-auto p-8 border-r">
+          <h1 className="text-3xl font-bold mb-8">Signup Modal Builder</h1>
           <ModalBuilder config={config} onChange={setConfig} />
+        </div>
+
+        {/* Right side - Preview */}
+        <div className="w-1/2 bg-black/80 flex items-center justify-center overflow-auto">
+          <SignupModal open={true} onOpenChange={() => {}} config={config} />
         </div>
       </div>
     </div>
