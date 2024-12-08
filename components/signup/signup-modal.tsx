@@ -162,28 +162,18 @@ export function SignupModal({
         <div className="p-10 flex flex-col rounded-r-lg relative overflow-auto">
           <div className="space-y-8 flex-shrink-0">
             <div className="flex items-center gap-4">
-              <AnimatePresence mode="wait">
-                {step > 1 && (
-                  <motion.button
-                    key={step + "-backbtn"}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={handleBack}
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-              <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: "#000000" }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+              {step > 1 && (
+                <button
+                  onClick={handleBack}
+                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              <div className="h-2 flex-1 bg-gray-100 rounded-full">
+                <div
+                  className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
