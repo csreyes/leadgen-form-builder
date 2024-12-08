@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2 } from "lucide-react";
 import { StepBuilder } from "./step-builder";
+import { BrandingConfig } from "./branding-config";
 import { type ModalConfig, type StepConfig, type Step } from "@/lib/types";
 
 interface ModalBuilderProps {
@@ -56,6 +57,8 @@ export function ModalBuilder({
 
   return (
     <div className="space-y-6">
+      <BrandingConfig config={config} onChange={onChange} />
+
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Steps</h2>
         <Button onClick={addStep} variant="outline" size="sm">

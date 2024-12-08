@@ -88,6 +88,9 @@ const defaultConfig: ModalConfig = {
   ],
   logo: "",
   trustedByLogos: sampleLogos,
+  branding: {
+    companyName: "OpenPipe",
+  },
   steps: [
     {
       headline: "Let's get started",

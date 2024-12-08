@@ -98,6 +98,10 @@ export interface ModalConfig {
     leftPanelColor?: string;
     rightPanelMainColor?: string;
   };
+  branding?: {
+    logo?: string;
+    companyName?: string;
+  };
 }
 
 export type FormData = Record<string, string>;

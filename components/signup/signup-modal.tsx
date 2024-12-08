@@ -183,9 +183,17 @@ export function SignupModal({
                 {/* Brand Header */}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl font-semibold text-gray-900">
-                      OpenPipe
-                    </span>
+                    {config.branding?.logo ? (
+                      <img
+                        src={config.branding.logo}
+                        alt={config.branding?.companyName || "Company Logo"}
+                        className="h-8 w-auto object-contain"
+                      />
+                    ) : (
+                      <span className="text-xl font-semibold text-gray-900">
+                        {config.branding?.companyName || "OpenPipe"}
+                      </span>
+                    )}
                   </div>
                   <div className="mt-2.5 w-full h-[1px] bg-gray-200"></div>
                 </div>
