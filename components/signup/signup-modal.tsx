@@ -162,7 +162,7 @@ export function SignupModal({
         <div className="relative rounded-r-lg overflow-hidden">
           <div className="h-full flex flex-col">
             {/* Header Section */}
-            <div className="px-12 pt-10">
+            <div className={`${isMobile ? "px-4" : "px-12"} pt-10`}>
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   {step > 1 && (
@@ -210,7 +210,9 @@ export function SignupModal({
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="h-full flex flex-col px-12 pt-8"
+                  className={`h-full flex flex-col ${
+                    isMobile ? "px-4" : "px-12"
+                  } pt-8`}
                 >
                   <motion.form
                     onSubmit={handleSubmit}
