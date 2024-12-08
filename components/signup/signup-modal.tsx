@@ -137,10 +137,10 @@ export function SignupModal({
         {/* Left Panel */}
         {!isMobile && (
           <div
-            className={`relative ${leftPanelPadding} rounded-l-lg`}
+            className="relative rounded-l-lg overflow-hidden"
             style={{ backgroundColor: leftPanelColor }}
           >
-            <div className="relative w-full h-full overflow-hidden">
+            <div className={`relative w-full h-full ${leftPanelPadding}`}>
               <AnimatePresence custom={direction} mode="sync">
                 <motion.div
                   key={step + "-left"}
@@ -158,41 +158,40 @@ export function SignupModal({
           </div>
         )}
 
-        {/* Right Panel with overflow-auto */}
-        <div className="p-10 flex flex-col rounded-r-lg relative overflow-auto">
-          <div className="space-y-8 flex-shrink-0">
-            <div className="flex items-center gap-4">
-              {step > 1 && (
-                <button
-                  onClick={handleBack}
-                  className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              )}
-              <div className="h-2 flex-1 bg-gray-100 rounded-full">
-                <div
-                  className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
-                  style={{ width: `${progress}%` }}
-                />
+        {/* Right Panel */}
+        <div className="relative rounded-r-lg overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="p-10">
+              <div className="space-y-8 flex-shrink-0">
+                <div className="flex items-center gap-4">
+                  {step > 1 && (
+                    <button
+                      onClick={handleBack}
+                      className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <div className="h-2 flex-1 bg-gray-100 rounded-full">
+                    <div
+                      className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+                {/* Brand Header */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-semibold text-gray-900">
+                      OpenPipe
+                    </span>
+                  </div>
+                  <div className="mt-2 w-full h-[2px] bg-gray-100"></div>
+                </div>
               </div>
             </div>
-            {/* Brand Header */}
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold text-gray-900">
-                  OpenPipe
-                </span>
-              </div>
-              <div className="mt-2 w-full h-[2px] bg-gray-100"></div>
-            </div>
-          </div>
 
-          <motion.form
-            onSubmit={handleSubmit}
-            className="mt-8 flex-1 flex flex-col relative"
-          >
-            <div className="relative flex-1 overflow-auto">
+            <div className="flex-1 relative overflow-hidden">
               <AnimatePresence custom={direction} mode="sync">
                 <motion.div
                   key={step + "-right"}
@@ -201,40 +200,33 @@ export function SignupModal({
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="space-y-4 flex-1 flex flex-col"
+                  className="absolute inset-0 p-10 pt-0"
                 >
-                  <FormSteps
-                    step={step}
-                    formData={formData}
-                    setFormData={setFormData}
-                    currentColor="#000000"
-                    config={config.steps}
-                  />
+                  <motion.form
+                    onSubmit={handleSubmit}
+                    className="flex-1 flex flex-col h-full"
+                  >
+                    <FormSteps
+                      step={step}
+                      formData={formData}
+                      setFormData={setFormData}
+                      currentColor="#000000"
+                      config={config.steps}
+                    />
+
+                    <div className="flex justify-end pt-4 mt-auto">
+                      <Button
+                        type="submit"
+                        className="rounded-full px-8 py-6 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
+                      >
+                        {step === totalSteps ? "Submit" : "Continue"}
+                      </Button>
+                    </div>
+                  </motion.form>
                 </motion.div>
               </AnimatePresence>
             </div>
-
-            {step < totalSteps && (
-              <div className="flex justify-end pt-4 mt-auto">
-                <Button
-                  type="submit"
-                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
-                >
-                  Continue
-                </Button>
-              </div>
-            )}
-            {step === totalSteps && (
-              <div className="flex justify-end pt-4 mt-auto">
-                <Button
-                  type="submit"
-                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
-                >
-                  Submit
-                </Button>
-              </div>
-            )}
-          </motion.form>
+          </div>
         </div>
       </div>
       <div className="fixed top-4 right-4 flex items-center gap-2 p-1.5 bg-white rounded-lg shadow-md border">
