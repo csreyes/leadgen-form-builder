@@ -128,7 +128,7 @@ export function SignupModal({
 
   return (
     <div
-      className={`rounded-lg border shadow-sm ${
+      className={`overflow-hidden rounded-lg border shadow-sm ${
         isMobile ? "max-w-[420px]" : "max-w-[1200px]"
       } mx-auto relative`}
       style={{ backgroundColor: rightPanelColor }}
@@ -137,7 +137,7 @@ export function SignupModal({
         {/* Left Panel */}
         {!isMobile && (
           <div
-            className={`relative ${leftPanelPadding}`}
+            className={`relative ${leftPanelPadding} rounded-l-lg`}
             style={{ backgroundColor: leftPanelColor }}
           >
             <div className="relative w-full h-full overflow-hidden">
