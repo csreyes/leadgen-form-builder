@@ -203,6 +203,7 @@ export function SignupModal({
                   formData={formData}
                   setFormData={setFormData}
                   currentColor={currentColor}
+                  config={config.steps}
                 />
               </motion.div>
             </AnimatePresence>
