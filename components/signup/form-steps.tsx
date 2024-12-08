@@ -1,7 +1,9 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import Image from "next/image";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -11,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormData, Step, StepConfig, FormField } from "@/lib/types";
-import { motion } from "framer-motion";
 
 interface FormStepsProps {
   step: Step;
@@ -64,23 +65,21 @@ export function FormSteps({
     );
   }
 
-  // Group fields into rows
+  // Split fields into rows based on fullWidth
   const rows: FormField[][] = [];
   let currentRow: FormField[] = [];
 
-  (currentStep.fields || []).forEach((field) => {
-    if (field.fullWidth) {
-      if (currentRow.length > 0) {
-        rows.push(currentRow);
-        currentRow = [];
-      }
-      rows.push([field]);
+  currentStep.fields.forEach((field) => {
+    if (field.fullWidth && currentRow.length > 0) {
+      rows.push(currentRow);
+      currentRow = [field];
+      rows.push(currentRow);
+      currentRow = [];
+    } else if (currentRow.length === 2) {
+      rows.push(currentRow);
+      currentRow = [field];
     } else {
       currentRow.push(field);
-      if (currentRow.length === 2) {
-        rows.push(currentRow);
-        currentRow = [];
-      }
     }
   });
 
@@ -96,18 +95,21 @@ export function FormSteps({
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       ) => setFormData({ ...formData, [field.id]: e.target.value }),
       required: field.required,
-      className:
-        "rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200",
       placeholder:
         field.type === "email" && field.id.toLowerCase().includes("email")
           ? "johndoe@example.com"
           : "",
     };
 
+    const commonClasses =
+      "h-12 w-full rounded-md border border-gray-300 px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200";
+
     switch (field.type) {
       case "text":
       case "email":
-        return <Input {...commonProps} type={field.type} />;
+        return (
+          <Input {...commonProps} type={field.type} className={commonClasses} />
+        );
       case "select":
         return (
           <Select
@@ -119,14 +121,19 @@ export function FormSteps({
               })
             }
           >
-            <SelectTrigger className="w-full rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200">
+            <SelectTrigger className={commonClasses}>
               <SelectValue
                 placeholder={`Select ${field.label.toLowerCase()}`}
+                className="text-base"
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-md border-gray-300">
               {(field.options || []).map((option: string) => (
-                <SelectItem key={option} value={option}>
+                <SelectItem
+                  key={option}
+                  value={option}
+                  className="text-base py-3 px-4 focus:bg-gray-100 cursor-pointer"
+                >
                   {option}
                 </SelectItem>
               ))}
@@ -137,7 +144,7 @@ export function FormSteps({
         return (
           <Textarea
             {...commonProps}
-            className="min-h-[120px] rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-black focus:border-black resize-none transition-colors duration-200"
+            className="min-h-[120px] w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-black focus:border-black resize-none transition-colors duration-200"
           />
         );
       default:
@@ -158,7 +165,9 @@ export function FormSteps({
               <div
                 key={field.id}
                 className={
-                  field.fullWidth ? "col-span-1 md:col-span-2" : "col-span-1"
+                  field.fullWidth
+                    ? "col-span-1 md:col-span-2 px-1"
+                    : "col-span-1 px-1"
                 }
               >
                 <div className="space-y-2">
