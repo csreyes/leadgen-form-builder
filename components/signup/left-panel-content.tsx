@@ -49,7 +49,7 @@ export function LeftPanelContent({
 
   if (step.panelType === "main") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <h2 className="text-4xl font-bold leading-tight text-white">
           {content.headline}
         </h2>
@@ -65,7 +65,7 @@ export function LeftPanelContent({
           })}
         </ul>
         {content.trustedByLogos?.length > 0 && (
-          <div className="pt-8">
+          <div className="pt-8 w-full">
             <p className="text-sm mb-3 text-white/80">
               Trusted by engineers at:
             </p>
@@ -84,7 +84,7 @@ export function LeftPanelContent({
                         src={logo.url}
                         alt={logo.alt}
                         fill
-                        className="object-contain"
+                        className="object-contain invert"
                       />
                     ) : (
                       <div className="bg-gray-200 w-full h-full" />
@@ -101,7 +101,7 @@ export function LeftPanelContent({
 
   if (step.panelType === "value-props") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
         <div className="space-y-4">
           {content.stats?.map((stat: any, index: number) => {

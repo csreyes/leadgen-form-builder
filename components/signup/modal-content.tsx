@@ -162,7 +162,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 h-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 min-h-screen">
       {/* Left Panel */}
       {(!isMobile || step === 1) && (
         <div
@@ -175,7 +175,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 : config.style?.leftPanelColor,
           }}
         >
-          <div className="relative w-full h-full p-12">
+          <div className="relative w-full h-full p-12 overflow-y-auto">
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={step + "-left"}
@@ -200,7 +200,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
 
       {/* Right Panel */}
       <div
-        className="relative"
+        className="relative min-h-screen sm:min-h-0"
         style={{ backgroundColor: config.style?.rightPanelMainColor }}
       >
         <div className="h-full flex flex-col">
@@ -244,7 +244,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
           </div>
 
           {/* Content Section */}
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 relative overflow-y-auto">
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={step + "-right"}
@@ -253,9 +253,12 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="absolute inset-0 px-12 pt-8 pb-8 flex flex-col"
+                className="absolute inset-0 px-12 pt-8 pb-8"
               >
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col min-h-full"
+                >
                   <div className="flex-1 space-y-6">
                     <div>
                       <h2 className="text-2xl font-semibold">
@@ -268,7 +271,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                     <div className="pt-2">{renderFormFields()}</div>
                   </div>
 
-                  <div className="flex justify-end pt-6">
+                  <div className="flex justify-end pt-6 mt-auto">
                     <Button
                       type="submit"
                       className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"

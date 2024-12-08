@@ -104,7 +104,7 @@ export default function TestIframePage() {
   };
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full min-h-screen overflow-auto">
       <ModalContent config={config} onSubmit={handleSubmit} />
     </div>
   );
