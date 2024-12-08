@@ -65,21 +65,23 @@ export function FormSteps({
     );
   }
 
-  // Split fields into rows based on fullWidth
+  // Group fields into rows based on fullWidth
   const rows: FormField[][] = [];
   let currentRow: FormField[] = [];
 
   currentStep.fields.forEach((field) => {
-    if (field.fullWidth && currentRow.length > 0) {
-      rows.push(currentRow);
-      currentRow = [field];
-      rows.push(currentRow);
-      currentRow = [];
-    } else if (currentRow.length === 2) {
-      rows.push(currentRow);
-      currentRow = [field];
+    if (field.fullWidth) {
+      if (currentRow.length > 0) {
+        rows.push(currentRow);
+        currentRow = [];
+      }
+      rows.push([field]);
     } else {
       currentRow.push(field);
+      if (currentRow.length === 2) {
+        rows.push(currentRow);
+        currentRow = [];
+      }
     }
   });
 
@@ -160,14 +162,12 @@ export function FormSteps({
       <p className="text-gray-600 text-lg mb-6">{currentStep.subheadline}</p>
       <div className="space-y-6 flex-1">
         {rows.map((row, i) => (
-          <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div key={i} className="flex flex-col md:flex-row gap-4">
             {row.map((field) => (
               <div
                 key={field.id}
                 className={
-                  field.fullWidth
-                    ? "col-span-1 md:col-span-2 px-1"
-                    : "col-span-1 px-1"
+                  field.fullWidth ? "w-full px-1" : "w-full md:w-1/2 px-1"
                 }
               >
                 <div className="space-y-2">
