@@ -93,6 +93,11 @@ export interface ModalConfig {
     leftPanelPadding?: string;
     leftPanelColor?: string;
     rightPanelMainColor?: string;
+    // Global styles
+    fontFamily?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    textColor?: string;
   };
   branding?: {
     logo?: string;

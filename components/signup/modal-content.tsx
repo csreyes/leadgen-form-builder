@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ModalConfig, FormData } from "@/lib/types";
+import { ModalConfig, FormData, FormField } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 import { LeftPanelContent } from "./left-panel-content";
 
@@ -46,6 +46,22 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   const currentStepIndex = step - 1;
   const currentStep = config.steps[currentStepIndex];
   const progress = (step / totalSteps) * 100;
+
+  // Compute effective step if inheritPreviousPanel is true
+  const effectiveStep = useMemo(() => {
+    if (currentStep?.inheritPreviousPanel && currentStepIndex > 0) {
+      const prevStep = config.steps[currentStepIndex - 1];
+      return {
+        ...prevStep,
+        ...currentStep,
+        fields: currentStep.fields,
+        inheritPreviousPanel: currentStep.inheritPreviousPanel,
+        panelBackgroundColor:
+          currentStep.panelBackgroundColor ?? prevStep.panelBackgroundColor,
+      };
+    }
+    return currentStep;
+  }, [config.steps, currentStep, currentStepIndex]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,89 +106,99 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
     }),
   };
 
-  const renderFormFields = () => {
-    if (currentStepIndex === 0) {
-      return (
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="email">Work Email</Label>
+  const renderField = (field: FormField) => {
+    switch (field.type) {
+      case "text":
+      case "email":
+        return (
+          <div key={field.id} className={field.fullWidth ? "col-span-2" : ""}>
+            <Label htmlFor={field.id}>{field.label}</Label>
             <Input
-              id="email"
-              type="email"
-              value={formData.email || ""}
+              id={field.id}
+              type={field.type}
+              value={formData[field.id] || ""}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, [field.id]: e.target.value })
               }
-              placeholder="you@company.com"
-              required
+              required={field.required}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                type="text"
-                value={formData.firstName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                type="text"
-                value={formData.lastName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-                required
-              />
-            </div>
+        );
+      case "select":
+        return (
+          <div key={field.id} className={field.fullWidth ? "col-span-2" : ""}>
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Select
+              value={formData[field.id] || ""}
+              onValueChange={(value) =>
+                setFormData({ ...formData, [field.id]: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={`Select ${field.label.toLowerCase()}`}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      );
-    } else if (currentStepIndex === 1) {
-      return (
-        <div>
-          <Label htmlFor="currentModels">Current Models</Label>
-          <Select
-            value={formData.currentModels || ""}
-            onValueChange={(value) =>
-              setFormData({ ...formData, currentModels: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select the models you use" />
-            </SelectTrigger>
-            <SelectContent>
-              {currentStep.fields[0].options?.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
+        );
+      case "textarea":
+        return (
+          <div key={field.id} className={field.fullWidth ? "col-span-2" : ""}>
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <textarea
+              id={field.id}
+              value={formData[field.id] || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, [field.id]: e.target.value })
+              }
+              required={field.required}
+              className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
+  const renderFormFields = () => {
+    if (!effectiveStep?.fields?.length) return null;
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {effectiveStep.fields.map((field) => renderField(field))}
+      </div>
+    );
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 min-h-screen"
+      style={{
+        fontFamily: config.style?.fontFamily || "system-ui",
+        color: config.style?.textColor || "#000000",
+      }}
+    >
       {/* Left Panel */}
       {!isMobile && (
         <div
           className="relative"
           style={{
             background:
-              typeof config.style?.leftPanelColor === "string" &&
-              config.style.leftPanelColor.includes("gradient")
-                ? config.style.leftPanelColor
-                : config.style?.leftPanelColor,
+              typeof effectiveStep?.panelBackgroundColor === "string" &&
+              effectiveStep.panelBackgroundColor.includes("gradient")
+                ? effectiveStep.panelBackgroundColor
+                : effectiveStep?.panelBackgroundColor ||
+                  config.style?.leftPanelColor ||
+                  "#f97316",
           }}
         >
           <div className="relative w-full h-full p-6 sm:p-12 overflow-y-auto">
@@ -186,10 +212,13 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 exit="exit"
                 className="w-full h-full"
               >
-                {currentStep && (
+                {effectiveStep && (
                   <LeftPanelContent
-                    step={currentStep}
-                    backgroundColor={config.style?.leftPanelColor}
+                    step={effectiveStep}
+                    backgroundColor={
+                      effectiveStep.panelBackgroundColor ||
+                      config.style?.leftPanelColor
+                    }
                   />
                 )}
               </motion.div>
@@ -201,7 +230,9 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
       {/* Right Panel */}
       <div
         className="relative min-h-screen"
-        style={{ backgroundColor: config.style?.rightPanelMainColor }}
+        style={{
+          backgroundColor: config.style?.rightPanelMainColor || "#FFFFFF",
+        }}
       >
         <div className="h-full flex flex-col">
           {/* Header Section */}
@@ -218,8 +249,11 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 )}
                 <div className="h-2 flex-1 bg-gray-100 rounded-full">
                   <div
-                    className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
-                    style={{ width: `${progress}%` }}
+                    className="h-full rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      width: `${progress}%`,
+                      backgroundColor: config.style?.primaryColor || "#f97316",
+                    }}
                   />
                 </div>
               </div>
@@ -233,7 +267,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                       className="h-8 w-auto object-contain"
                     />
                   ) : (
-                    <span className="text-xl font-semibold text-gray-900">
+                    <span className="text-xl font-semibold">
                       {config.branding?.companyName || "OpenPipe"}
                     </span>
                   )}
@@ -262,10 +296,10 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                   <div className="flex-1 space-y-6">
                     <div>
                       <h2 className="text-2xl font-semibold">
-                        {currentStep.headline}
+                        {effectiveStep.headline}
                       </h2>
                       <p className="text-gray-600 mt-2">
-                        {currentStep.subheadline}
+                        {effectiveStep.subheadline}
                       </p>
                     </div>
                     <div className="pt-2">{renderFormFields()}</div>
@@ -274,7 +308,11 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                   <div className="flex justify-end pt-6 mt-auto">
                     <Button
                       type="submit"
-                      className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
+                      className="rounded-full px-8 py-4 text-lg text-white hover:opacity-80 transition-opacity duration-200"
+                      style={{
+                        backgroundColor:
+                          config.style?.primaryColor || "#f97316",
+                      }}
                     >
                       {step === totalSteps ? "Submit" : "Continue"}
                     </Button>

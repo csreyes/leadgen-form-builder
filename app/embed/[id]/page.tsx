@@ -1,40 +1,40 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { ModalConfig } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { ClientForm } from "@/components/signup/client-form";
 
-// This is needed for dynamic routes in Next.js
-export async function generateStaticParams() {
-  const { data } = await supabase
-    .from("modal_configs")
-    .select("id")
-    .eq("published", true);
+export default function EmbedPage({ params }: { params: { id: string } }) {
+  const [config, setConfig] = useState<ModalConfig | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  return (data || []).map((config) => ({
-    id: config.id,
-  }));
-}
+  useEffect(() => {
+    async function fetchConfig() {
+      const { data, error } = await supabase
+        .from("modal_configs")
+        .select("*")
+        .eq("id", params.id)
+        .single();
 
-// For dynamic routes that aren't pre-rendered
-export const dynamicParams = true;
+      if (error || !data) {
+        setError("Failed to load modal configuration");
+        return;
+      }
 
-export default async function EmbedPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { data, error } = await supabase
-    .from("modal_configs")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+      setConfig(data.config as ModalConfig);
+    }
 
-  if (error || !data) {
-    return (
-      <div className="p-4 text-red-500">Failed to load modal configuration</div>
-    );
+    fetchConfig();
+  }, [params.id]);
+
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
   }
 
-  const config = data.config as ModalConfig;
+  if (!config) {
+    return <div className="p-4">Loading...</div>;
+  }
 
   return (
     <div className="w-full min-h-screen overflow-auto">

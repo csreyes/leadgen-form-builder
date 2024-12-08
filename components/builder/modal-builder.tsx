@@ -3,10 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Share2 } from "lucide-react";
 import { StepBuilder } from "./step-builder";
 import { BrandingConfig } from "./branding-config";
+import { StyleConfig } from "./style-config";
 import { type ModalConfig, type StepConfig, type Step } from "@/lib/types";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ModalBuilderProps {
   config: ModalConfig;
@@ -33,6 +36,9 @@ export function ModalBuilder({
   currentStep,
   onStepChange,
 }: ModalBuilderProps) {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+
   const addStep = () => {
     onChange({
       ...config,
@@ -55,9 +61,71 @@ export function ModalBuilder({
     onChange({ ...config, steps: newSteps });
   };
 
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    try {
+      const response = await fetch("/api/modal-config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          config,
+          publish: true,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error);
+
+      setEmbedUrl(data.data.embedUrl);
+      toast.success("Successfully published modal!");
+    } catch (error) {
+      console.error("Error publishing modal:", error);
+      toast.error("Failed to publish modal. Please try again.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const copyEmbedCode = () => {
+    if (!embedUrl) return;
+    const embedCode = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0"></iframe>`;
+    navigator.clipboard.writeText(embedCode);
+    toast.success("Embed code copied to clipboard!");
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Modal Builder</h2>
+        <div className="flex items-center gap-2">
+          {embedUrl && (
+            <Button variant="outline" onClick={copyEmbedCode}>
+              Copy Embed Code
+            </Button>
+          )}
+          <Button onClick={handlePublish} disabled={isPublishing}>
+            <Share2 className="w-4 h-4 mr-2" />
+            {isPublishing ? "Publishing..." : "Publish"}
+          </Button>
+        </div>
+      </div>
+
+      {embedUrl && (
+        <Card className="p-4 bg-gray-50">
+          <p className="text-sm text-gray-600 mb-2">
+            Your modal is published! Use this URL to embed it:
+          </p>
+          <code className="text-sm bg-white p-2 rounded border block overflow-x-auto">
+            {embedUrl}
+          </code>
+        </Card>
+      )}
+
       <BrandingConfig config={config} onChange={onChange} />
+
+      <StyleConfig config={config} onChange={onChange} />
 
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Steps</h2>
