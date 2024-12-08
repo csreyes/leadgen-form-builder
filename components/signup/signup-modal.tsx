@@ -161,13 +161,14 @@ export function SignupModal({
         {/* Right Panel */}
         <div className="relative rounded-r-lg overflow-hidden">
           <div className="h-full flex flex-col">
-            <div className="p-10">
-              <div className="space-y-8 flex-shrink-0">
+            {/* Header Section */}
+            <div className="px-12 pt-10">
+              <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   {step > 1 && (
                     <button
                       onClick={handleBack}
-                      className="text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                      className="text-gray-600 hover:text-gray-900 transition-colors duration-200 -ml-1"
                     >
                       <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -186,11 +187,12 @@ export function SignupModal({
                       OpenPipe
                     </span>
                   </div>
-                  <div className="mt-2 w-full h-[2px] bg-gray-100"></div>
+                  <div className="mt-2.5 w-full h-[1px] bg-gray-200"></div>
                 </div>
               </div>
             </div>
 
+            {/* Content Section */}
             <div className="flex-1 relative overflow-hidden">
               <AnimatePresence custom={direction} mode="sync">
                 <motion.div
@@ -200,24 +202,26 @@ export function SignupModal({
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="absolute inset-0 p-10 pt-0"
+                  className="absolute inset-0 px-12 pt-8"
                 >
                   <motion.form
                     onSubmit={handleSubmit}
-                    className="flex-1 flex flex-col h-full"
+                    className="flex flex-col h-full"
                   >
-                    <FormSteps
-                      step={step}
-                      formData={formData}
-                      setFormData={setFormData}
-                      currentColor="#000000"
-                      config={config.steps}
-                    />
+                    <div className="flex-1 min-h-0">
+                      <FormSteps
+                        step={step}
+                        formData={formData}
+                        setFormData={setFormData}
+                        currentColor="#000000"
+                        config={config.steps}
+                      />
+                    </div>
 
-                    <div className="flex justify-end pt-4 mt-auto">
+                    <div className="flex justify-end pt-6 mt-auto">
                       <Button
                         type="submit"
-                        className="rounded-full px-8 py-6 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
+                        className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
                       >
                         {step === totalSteps ? "Submit" : "Continue"}
                       </Button>
