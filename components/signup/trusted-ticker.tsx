@@ -22,12 +22,16 @@ export function TrustedTicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
 
+  // Only show fade overlays if it's a solid color
+  const shouldShowFade =
+    showFadeOverlays && !backgroundColor.includes("gradient");
+
   useEffect(() => {
     if (!containerRef.current) return;
 
     const startAnimation = async () => {
       const containerWidth = containerRef.current?.scrollWidth || 0;
-      const singleSetWidth = containerWidth / 2; // We're showing 2 sets for seamless loop
+      const singleSetWidth = containerWidth / 2;
 
       await controls.start({
         x: -singleSetWidth,
@@ -47,18 +51,18 @@ export function TrustedTicker({
 
   return (
     <div className="relative h-12 overflow-hidden">
-      {showFadeOverlays && (
+      {shouldShowFade && (
         <>
           <div
-            className="pointer-events-none absolute top-0 left-0 h-full w-12 bg-gradient-to-r z-10"
+            className="pointer-events-none absolute top-0 left-0 h-full w-24 z-10"
             style={{
-              backgroundImage: `linear-gradient(to right, ${backgroundColor}, transparent)`,
+              background: `linear-gradient(to right, ${backgroundColor}, ${backgroundColor}00)`,
             }}
           />
           <div
-            className="pointer-events-none absolute top-0 right-0 h-full w-12 bg-gradient-to-l z-10"
+            className="pointer-events-none absolute top-0 right-0 h-full w-24 z-10"
             style={{
-              backgroundImage: `linear-gradient(to left, ${backgroundColor}, transparent)`,
+              background: `linear-gradient(to left, ${backgroundColor}, ${backgroundColor}00)`,
             }}
           />
         </>

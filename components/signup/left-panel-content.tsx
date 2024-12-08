@@ -72,7 +72,7 @@ export function LeftPanelContent({
               <TrustedTicker
                 logos={content.trustedByLogos}
                 showFadeOverlays={true}
-                backgroundColor={backgroundColor}
+                backgroundColor={step.panelBackgroundColor || backgroundColor}
               />
             ) : (
               <div className="flex items-center gap-6 text-white flex-wrap">

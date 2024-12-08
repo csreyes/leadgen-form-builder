@@ -138,7 +138,7 @@ export function SignupModal({
         {!isMobile && (
           <div
             className="relative rounded-l-lg overflow-hidden"
-            style={{ backgroundColor: leftPanelColor }}
+            style={{ background: leftPanelColor }}
           >
             <div className={`relative w-full h-full ${leftPanelPadding}`}>
               <AnimatePresence custom={direction} mode="sync">

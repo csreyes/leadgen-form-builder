@@ -193,12 +193,9 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
           className="relative"
           style={{
             background:
-              typeof effectiveStep?.panelBackgroundColor === "string" &&
-              effectiveStep.panelBackgroundColor.includes("gradient")
-                ? effectiveStep.panelBackgroundColor
-                : effectiveStep?.panelBackgroundColor ||
-                  config.style?.leftPanelColor ||
-                  "#f97316",
+              effectiveStep?.panelBackgroundColor ||
+              config.style?.leftPanelColor ||
+              "#f97316",
           }}
         >
           <div className="relative w-full h-full p-6 sm:p-12 overflow-y-auto">
