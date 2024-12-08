@@ -1,18 +1,28 @@
-"use client"
+"use client";
 
-import { Card } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Plus, Trash2 } from "lucide-react"
-import { type StepConfig, type FormField } from "@/lib/types"
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  type StepConfig,
+  type FormField,
+  type FormFieldType,
+} from "@/lib/types";
 
 interface RightPanelBuilderProps {
-  step: StepConfig
-  onChange: (updates: Partial<StepConfig>) => void
+  step: StepConfig;
+  onChange: (updates: Partial<StepConfig>) => void;
 }
 
 export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
@@ -25,23 +35,23 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
           label: "",
           type: "text",
           required: false,
-          fullWidth: true
-        }
-      ]
-    })
-  }
+          fullWidth: true,
+        },
+      ],
+    });
+  };
 
   const updateField = (index: number, updates: Partial<FormField>) => {
-    const newFields = [...step.fields]
-    newFields[index] = { ...newFields[index], ...updates }
-    onChange({ fields: newFields })
-  }
+    const newFields = [...step.fields];
+    newFields[index] = { ...newFields[index], ...updates };
+    onChange({ fields: newFields });
+  };
 
   const removeField = (index: number) => {
-    const newFields = [...step.fields]
-    newFields.splice(index, 1)
-    onChange({ fields: newFields })
-  }
+    const newFields = [...step.fields];
+    newFields.splice(index, 1);
+    onChange({ fields: newFields });
+  };
 
   return (
     <div className="space-y-6">
@@ -64,11 +74,7 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <Label>Form Fields</Label>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={addField}
-          >
+          <Button variant="outline" size="sm" onClick={addField}>
             <Plus className="w-4 h-4 mr-2" />
             Add Field
           </Button>
@@ -83,14 +89,18 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                     <Label>Label</Label>
                     <Input
                       value={field.label}
-                      onChange={(e) => updateField(index, { label: e.target.value })}
+                      onChange={(e) =>
+                        updateField(index, { label: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2 w-[200px]">
                     <Label>Type</Label>
                     <Select
                       value={field.type}
-                      onValueChange={(value) => updateField(index, { type: value })}
+                      onValueChange={(value) =>
+                        updateField(index, { type: value as FormFieldType })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -99,7 +109,9 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                         <SelectItem value="text">Text</SelectItem>
                         <SelectItem value="email">Email</SelectItem>
                         <SelectItem value="select">Select</SelectItem>
-                        <SelectItem value="multi-select">Multi Select</SelectItem>
+                        <SelectItem value="multi-select">
+                          Multi Select
+                        </SelectItem>
                         <SelectItem value="textarea">Textarea</SelectItem>
                       </SelectContent>
                     </Select>
@@ -119,9 +131,11 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                     <Label>Options (one per line)</Label>
                     <Textarea
                       value={field.options?.join("\n")}
-                      onChange={(e) => updateField(index, {
-                        options: e.target.value.split("\n").filter(Boolean)
-                      })}
+                      onChange={(e) =>
+                        updateField(index, {
+                          options: e.target.value.split("\n").filter(Boolean),
+                        })
+                      }
                       rows={4}
                     />
                   </div>
@@ -131,14 +145,18 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={field.required}
-                      onCheckedChange={(checked) => updateField(index, { required: checked })}
+                      onCheckedChange={(checked) =>
+                        updateField(index, { required: checked })
+                      }
                     />
                     <Label>Required</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={field.fullWidth}
-                      onCheckedChange={(checked) => updateField(index, { fullWidth: checked })}
+                      onCheckedChange={(checked) =>
+                        updateField(index, { fullWidth: checked })
+                      }
                     />
                     <Label>Full Width</Label>
                   </div>
@@ -149,5 +167,5 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
