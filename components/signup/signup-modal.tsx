@@ -210,13 +210,13 @@ export function SignupModal({
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="absolute inset-0 px-12 pt-8"
+                  className="h-full flex flex-col px-12 pt-8"
                 >
                   <motion.form
                     onSubmit={handleSubmit}
-                    className="flex flex-col h-full"
+                    className="flex flex-col"
                   >
-                    <div className="flex-1 min-h-0">
+                    <div>
                       <FormSteps
                         step={step}
                         formData={formData}
@@ -226,7 +226,7 @@ export function SignupModal({
                       />
                     </div>
 
-                    <div className="flex justify-end pt-6 mt-auto">
+                    <div className="flex justify-end mt-8">
                       <Button
                         type="submit"
                         className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"

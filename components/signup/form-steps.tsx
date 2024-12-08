@@ -52,12 +52,6 @@ export function FormSteps({
                   {currentStep.subheadline}
                 </p>
               </div>
-              <button
-                onClick={() => window.close()}
-                className="rounded-full px-8 py-4 text-lg font-semibold bg-black text-white hover:opacity-80 transition-opacity duration-200"
-              >
-                Close Modal
-              </button>
             </div>
           </motion.div>
         </div>
