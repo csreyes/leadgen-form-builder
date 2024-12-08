@@ -34,7 +34,7 @@ export function TrustedTicker({
       await controls.start({
         x: -singleSetWidth,
         transition: {
-          duration: 20,
+          duration: 10,
           ease: "linear",
           repeat: Infinity,
           repeatType: "loop",
@@ -73,7 +73,7 @@ export function TrustedTicker({
         {/* First set */}
         <div className="flex items-center gap-8">
           {logos.map((logo) => (
-            <div key={logo.id} className="relative w-32 h-8 shrink-0 invert">
+            <div key={logo.id} className="relative w-32 h-8 shrink-0">
               <Image
                 src={
                   logo.url?.startsWith("/")
@@ -90,10 +90,7 @@ export function TrustedTicker({
         {/* Duplicate set for seamless loop */}
         <div className="flex items-center gap-8">
           {logos.map((logo) => (
-            <div
-              key={`${logo.id}-dup`}
-              className="relative w-32 h-8 shrink-0 invert"
-            >
+            <div key={`${logo.id}-dup`} className="relative w-32 h-8 shrink-0">
               <Image
                 src={
                   logo.url?.startsWith("/")
