@@ -1,3 +1,5 @@
+// components/signup/modal-content.tsx
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -26,6 +28,12 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   const [formData, setFormData] = useState<FormData>({});
   const [isMobile, setIsMobile] = useState(false);
 
+  // Track if we're on the very first render so we can skip initial animation
+  const [initialRender, setInitialRender] = useState(true);
+  useEffect(() => {
+    setInitialRender(false);
+  }, []);
+
   const prevStepRef = useRef<number>(step);
   useEffect(() => {
     prevStepRef.current = step;
@@ -45,7 +53,6 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   const totalSteps = config.steps.length;
   const currentStepIndex = step - 1;
   const currentStep = config.steps[currentStepIndex];
-  const progress = (step / totalSteps) * 100;
 
   // Compute effective step if inheritPreviousPanel is true
   const effectiveStep = useMemo(() => {
@@ -76,15 +83,18 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
     enter: (direction: number) => ({
       y: direction > 0 ? -50 : 50,
       opacity: 0,
+      position: "absolute" as const,
     }),
     center: {
       y: 0,
       opacity: 1,
+      position: "relative" as const,
       transition: { duration: 0.4, ease: "easeInOut" },
     },
     exit: (direction: number) => ({
       y: direction > 0 ? 50 : -50,
       opacity: 0,
+      position: "absolute" as const,
       transition: { duration: 0.4, ease: "easeInOut" },
     }),
   };
@@ -93,18 +103,23 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
     enter: (direction: number) => ({
       x: direction > 0 ? 50 : -50,
       opacity: 0,
+      position: "absolute" as const,
     }),
     center: {
       x: 0,
       opacity: 1,
+      position: "relative" as const,
       transition: { duration: 0.4, ease: "easeInOut" },
     },
     exit: (direction: number) => ({
       x: direction > 0 ? -50 : 50,
       opacity: 0,
+      position: "absolute" as const,
       transition: { duration: 0.4, ease: "easeInOut" },
     }),
   };
+
+  const progress = (step / totalSteps) * 100;
 
   const renderField = (field: FormField) => {
     switch (field.type) {
@@ -171,7 +186,6 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
 
   const renderFormFields = () => {
     if (!effectiveStep?.fields?.length) return null;
-
     return (
       <div className="grid grid-cols-2 gap-4">
         {effectiveStep.fields.map((field) => renderField(field))}
@@ -199,16 +213,9 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
           }}
         >
           <div className="relative w-full h-full p-6 sm:p-12 overflow-y-auto">
-            <AnimatePresence initial={false} custom={direction} mode="wait">
-              <motion.div
-                key={step + "-left"}
-                custom={direction}
-                variants={leftVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="w-full h-full"
-              >
+            {/* On the very first render (first load), we skip AnimatePresence for the left panel */}
+            {initialRender && step === 1 ? (
+              <div className="w-full h-full">
                 {effectiveStep && (
                   <LeftPanelContent
                     step={effectiveStep}
@@ -218,8 +225,30 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                     }
                   />
                 )}
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            ) : (
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                <motion.div
+                  key={step + "-left"}
+                  custom={direction}
+                  variants={leftVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="w-full h-full"
+                >
+                  {effectiveStep && (
+                    <LeftPanelContent
+                      step={effectiveStep}
+                      backgroundColor={
+                        effectiveStep.panelBackgroundColor ||
+                        config.style?.leftPanelColor
+                      }
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            )}
           </div>
         </div>
       )}
@@ -276,16 +305,9 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
 
           {/* Content Section */}
           <div className="flex-1 relative overflow-y-auto">
-            <AnimatePresence initial={false} custom={direction} mode="wait">
-              <motion.div
-                key={step + "-right"}
-                custom={direction}
-                variants={rightVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="absolute inset-0 px-6 sm:px-12 pt-8 pb-8"
-              >
+            {/* On the very first render and first step, skip initial animation on the right panel too */}
+            {initialRender && step === 1 ? (
+              <div className="absolute inset-0 px-6 sm:px-12 pt-8 pb-8">
                 <form
                   onSubmit={handleSubmit}
                   className="flex flex-col min-h-full"
@@ -315,8 +337,50 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                     </Button>
                   </div>
                 </form>
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            ) : (
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                <motion.div
+                  key={step + "-right"}
+                  custom={direction}
+                  variants={rightVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="absolute inset-0 px-6 sm:px-12 pt-8 pb-8"
+                >
+                  <form
+                    onSubmit={handleSubmit}
+                    className="flex flex-col min-h-full"
+                  >
+                    <div className="flex-1 space-y-6">
+                      <div>
+                        <h2 className="text-2xl font-semibold">
+                          {effectiveStep.headline}
+                        </h2>
+                        <p className="text-gray-600 mt-2">
+                          {effectiveStep.subheadline}
+                        </p>
+                      </div>
+                      <div className="pt-2">{renderFormFields()}</div>
+                    </div>
+
+                    <div className="flex justify-end pt-6 mt-auto">
+                      <Button
+                        type="submit"
+                        className="rounded-full px-8 py-4 text-lg text-white hover:opacity-80 transition-opacity duration-200"
+                        style={{
+                          backgroundColor:
+                            config.style?.primaryColor || "#f97316",
+                        }}
+                      >
+                        {step === totalSteps ? "Submit" : "Continue"}
+                      </Button>
+                    </div>
+                  </form>
+                </motion.div>
+              </AnimatePresence>
+            )}
           </div>
         </div>
       </div>

@@ -1,9 +1,12 @@
+// app/embed/[id]/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { ModalConfig } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { ClientForm } from "@/components/signup/client-form";
+import { Loader2 } from "lucide-react";
 
 export default function EmbedPage({ params }: { params: { id: string } }) {
   const [config, setConfig] = useState<ModalConfig | null>(null);
@@ -33,7 +36,11 @@ export default function EmbedPage({ params }: { params: { id: string } }) {
   }
 
   if (!config) {
-    return <div className="p-4">Loading...</div>;
+    return (
+      <div className="p-4 flex items-center justify-center w-full h-screen">
+        <Loader2 className="animate-spin h-8 w-8 text-gray-500" />
+      </div>
+    );
   }
 
   return (
