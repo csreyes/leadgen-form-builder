@@ -38,12 +38,14 @@ import { useState } from "react";
 import { SignupModal } from "@/components/signup/signup-modal";
 import { ModalBuilder } from "@/components/builder/modal-builder";
 import { ModalConfig, StepConfig, Step, TrustedLogo } from "@/lib/types";
+import { placeholderLogos } from "@/lib/placeholder-logos";
 
-// Example trusted logos as objects with url/alt:
-const sampleLogos: TrustedLogo[] = [
-  { id: "logo1", url: "/logo1.png", alt: "Company 1" },
-  { id: "logo2", url: "/logo2.png", alt: "Company 2" },
-];
+// Example trusted logos using base64 placeholders
+const sampleLogos = placeholderLogos;
+
+// Base64 placeholder for avatar
+const placeholderAvatar =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 const defaultPanelContent = {
   main: {
@@ -78,7 +80,7 @@ const defaultPanelContent = {
     author: {
       name: "John Doe",
       title: "CEO & Co-founder",
-      avatar: "",
+      avatar: placeholderAvatar,
     },
   },
   features: {
@@ -122,6 +124,9 @@ const defaultConfig: ModalConfig = {
   ],
   logo: "",
   trustedByLogos: sampleLogos,
+  branding: {
+    companyName: "OpenPipe",
+  },
   steps: [
     {
       headline: "Let's get started",
@@ -264,92 +269,208 @@ export default function Home() {
 
 
 
+### app/test-iframe/layout.tsx
+
+export const metadata = {
+  title: "Signup Modal",
+  description: "Customizable signup modal",
+};
+
+export default function IframeLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="bg-transparent m-0 p-0 min-h-screen">{children}</body>
+    </html>
+  );
+}
+
+
+
+### app/test-iframe/page.tsx
+
+"use client";
+
+import { ModalContent } from "@/components/signup/modal-content";
+import { FormData, ModalConfig } from "@/lib/types";
+import { placeholderLogos } from "@/lib/placeholder-logos";
+
+const config: ModalConfig = {
+  headline: "Train faster, cheaper models on production data",
+  valueProps: [
+    { icon: "Layers", text: "Train & deploy fine-tuned models" },
+    { icon: "DollarSign", text: "Save time and money" },
+    { icon: "Sparkles", text: "Get higher quality than OpenAI" },
+  ],
+  logo: "",
+  trustedByLogos: placeholderLogos,
+  steps: [
+    {
+      headline: "Get started with OpenPipe",
+      subheadline: "Create your account to start fine-tuning models",
+      panelType: "main",
+      panelContent: {
+        headline: "Train faster, cheaper models",
+        valueProps: [
+          { icon: "Layers", text: "Fine-tune models in minutes" },
+          { icon: "DollarSign", text: "Cut costs by 10-100x" },
+          { icon: "Rocket", text: "Deploy anywhere" },
+          { icon: "LineChart", text: "Evaluate & monitor performance" },
+        ],
+        trustedByLogos: placeholderLogos,
+        logoDisplayMode: "ticker",
+      },
+      fields: [
+        {
+          id: "email",
+          type: "email",
+          label: "Work Email",
+          required: true,
+          fullWidth: true,
+        },
+        {
+          id: "firstName",
+          type: "text",
+          label: "First Name",
+          required: true,
+          fullWidth: false,
+        },
+        {
+          id: "lastName",
+          type: "text",
+          label: "Last Name",
+          required: true,
+          fullWidth: false,
+        },
+      ],
+    },
+    {
+      headline: "Tell us about your models",
+      subheadline: "We'll help you optimize your workflow",
+      panelType: "value-props",
+      panelContent: {
+        headline: "Why use OpenPipe?",
+        stats: [
+          {
+            value: "14x",
+            label: "Cheaper than GPT-4 Turbo",
+            icon: "ChevronDown",
+          },
+          {
+            value: "5min",
+            label: "To start collecting training data",
+            icon: "ChevronRight",
+          },
+          {
+            value: "$7M",
+            label: "Saved by our customers this year",
+            icon: "ChevronUp",
+          },
+        ],
+      },
+      fields: [
+        {
+          id: "currentModels",
+          type: "select",
+          label: "Current Models",
+          required: true,
+          fullWidth: true,
+          options: ["GPT-4", "GPT-3.5", "Claude", "Llama 2", "Other"],
+        },
+      ],
+    },
+  ],
+  style: {
+    leftPanelColor: "#f97316",
+    rightPanelMainColor: "#FFFFFF",
+  },
+  branding: {
+    companyName: "OpenPipe",
+  },
+};
+
+export default function TestIframePage() {
+  const handleSubmit = (formData: FormData) => {
+    console.log("Form submitted:", formData);
+  };
+
+  return (
+    <div className="w-full min-h-screen overflow-auto">
+      <ModalContent config={config} onSubmit={handleSubmit} />
+    </div>
+  );
+}
+
+
+
 
 ## Components/Builder Directory
 
 ### components/builder/image-upload.tsx
 
-"use client"
+"use client";
 
-import { useState, useCallback } from "react"
-import { useDropzone } from "react-dropzone"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Upload, X } from "lucide-react"
-import Image from "next/image"
+import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { fileToBase64, isBase64Image } from "@/lib/utils";
 
 interface ImageUploadProps {
-  value?: string
-  onChange: (value: string) => void
-  label: string
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
 }
 
 export function ImageUpload({ value, onChange, label }: ImageUploadProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        onChange(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [onChange])
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.svg']
-    },
-    maxFiles: 1
-  })
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        const base64 = await fileToBase64(file);
+        onChange(base64);
+      } catch (error) {
+        console.error("Failed to convert image to base64:", error);
+      }
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      {value ? (
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="relative w-32 h-12">
-              <Image
-                src={value}
-                alt={label}
-                fill
-                className="object-contain"
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onChange("")}
-              className="text-gray-500 hover:text-red-600"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+    <div className="space-y-2">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+      <div className="flex items-center gap-4">
+        {value && isBase64Image(value) && (
+          <div className="relative w-32 h-8">
+            <img
+              src={value}
+              alt={label || "Uploaded image"}
+              className="w-full h-full object-contain"
+            />
           </div>
-        </Card>
-      ) : (
-        <Card 
-          {...getRootProps()}
-          className={`p-8 border-dashed cursor-pointer ${
-            isDragActive ? "border-blue-500 bg-blue-50" : ""
-          }`}
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
         >
-          <input {...getInputProps()} />
-          <div className="text-center space-y-4">
-            <Upload className="w-8 h-8 mx-auto text-gray-400" />
-            <div className="text-gray-600">
-              {isDragActive ? (
-                <p>Drop the image here...</p>
-              ) : (
-                <p>Drag and drop an image here, or click to select</p>
-              )}
-            </div>
-          </div>
-        </Card>
-      )}
+          {value ? "Change Image" : "Upload Image"}
+        </Button>
+      </div>
     </div>
-  )
+  );
 }
+
 
 
 ### components/builder/trusted-logos.tsx
@@ -617,7 +738,9 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const valueProps = [...(step.panelContent as any).valueProps];
+                  const valueProps = [
+                    ...((step.panelContent as any).valueProps || []),
+                  ];
                   valueProps.push({ icon: "Star", text: "" });
                   updatePanelContent({ valueProps });
                 }}
@@ -626,7 +749,7 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                 Add Value Prop
               </Button>
             </div>
-            {(step.panelContent as any).valueProps?.map(
+            {((step.panelContent as any).valueProps || []).map(
               (prop: any, index: number) => (
                 <Card key={index} className="p-4">
                   <div className="flex gap-4">
@@ -675,6 +798,26 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
               )
             )}
           </div>
+
+          {/* Add a toggle for Ticker vs Static */}
+          <div className="space-y-2">
+            <Label>Logo Display Mode</Label>
+            <Select
+              value={(step.panelContent as any).logoDisplayMode || "ticker"}
+              onValueChange={(val) =>
+                updatePanelContent({ logoDisplayMode: val })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Display Mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ticker">Ticker (Animated)</SelectItem>
+                <SelectItem value="static">Static (No Animation)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <TrustedLogos
             logos={(step.panelContent as any).trustedByLogos || []}
             onChange={(logos) => updatePanelContent({ trustedByLogos: logos })}
@@ -990,6 +1133,144 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
         </Card>
       )}
     </div>
+  );
+}
+
+
+
+### components/builder/branding-config.tsx
+
+"use client";
+
+import { useRef } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { type ModalConfig } from "@/lib/types";
+import { fileToBase64, isBase64Image } from "@/lib/utils";
+
+interface BrandingConfigProps {
+  config: ModalConfig;
+  onChange: (config: ModalConfig) => void;
+}
+
+export function BrandingConfig({ config, onChange }: BrandingConfigProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        const base64 = await fileToBase64(file);
+        onChange({
+          ...config,
+          branding: {
+            ...config.branding,
+            logo: base64,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to convert image to base64:", error);
+      }
+    }
+  };
+
+  const handleCompanyNameChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    onChange({
+      ...config,
+      branding: {
+        ...config.branding,
+        companyName: event.target.value,
+      },
+    });
+  };
+
+  const handleLogoBase64Change = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    onChange({
+      ...config,
+      branding: {
+        ...config.branding,
+        logo: event.target.value,
+      },
+    });
+  };
+
+  return (
+    <Card className="p-6">
+      <h2 className="text-lg font-semibold mb-4">Branding</h2>
+      <div className="space-y-4">
+        <div>
+          <Label>Company Name</Label>
+          <Input
+            value={config.branding?.companyName || ""}
+            onChange={handleCompanyNameChange}
+            placeholder="Enter company name"
+          />
+        </div>
+        <div>
+          <Label>Logo</Label>
+          <div className="mt-2 space-y-4">
+            {config.branding?.logo && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={config.branding.logo}
+                    alt={config.branding.companyName || "Company Logo"}
+                    className="h-8 w-auto object-contain"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() =>
+                      onChange({
+                        ...config,
+                        branding: {
+                          ...config.branding,
+                          logo: undefined,
+                        },
+                      })
+                    }
+                  >
+                    Remove Logo
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label>Base64 Data</Label>
+                  <Input
+                    value={config.branding.logo}
+                    onChange={handleLogoBase64Change}
+                    className="font-mono text-xs"
+                  />
+                </div>
+              </div>
+            )}
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleLogoUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {config.branding?.logo ? "Change Logo" : "Upload Logo"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -1443,6 +1724,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2 } from "lucide-react";
 import { StepBuilder } from "./step-builder";
+import { BrandingConfig } from "./branding-config";
 import { type ModalConfig, type StepConfig, type Step } from "@/lib/types";
 
 interface ModalBuilderProps {
@@ -1494,6 +1776,8 @@ export function ModalBuilder({
 
   return (
     <div className="space-y-6">
+      <BrandingConfig config={config} onChange={onChange} />
+
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Steps</h2>
         <Button onClick={addStep} variant="outline" size="sm">
@@ -1590,51 +1874,110 @@ export function StepBuilder({ step, onChange }: StepBuilderProps) {
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useAnimationControls } from "framer-motion";
 import Image from "next/image";
+import { useEffect, useRef } from "react";
 import { TrustedLogo } from "@/lib/types";
 
 interface TrustedTickerProps {
   logos: TrustedLogo[];
+  showFadeOverlays?: boolean;
+  backgroundColor?: string;
 }
 
-export function TrustedTicker({ logos }: TrustedTickerProps) {
+const DEFAULT_IMAGE =
+  "data:image/avif;base64,AAAAHGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZgAAAZhtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgACAAAAAAG8AAEAAAAAAAAAHAABAAAAAAHYAAEAAAAAAAACCwAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAA12lwcnAAAACxaXBjbwAAABNjb2xybmNseAABAA0ABoAAAAAMYXYxQ4EAHAAAAAAUaXNwZQAAAAAAAAIAAAAAqwAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAMYXYxQ4EgAgAAAAAUaXNwZQAAAAAAAAIAAAAAqwAAABBwaXhpAAAAAAMICAgAAAAeaXBtYQAAAAAAAAACAAEEAYYHCAACBIIDBIUAAAAaaXJlZgAAAAAAAAAOYXV4bAACAAEAAQAAAi9tZGF0EgAKBhgh//VMKjIQENAAAEABSBkszhFh/reTUBIACgk4If/1TCAhoNIy+wMQ0AGGFIFAACcnGo2Od9cUTxSM4gmv2Xt4hMK1Nsc9xtzr725oEymoe+XRqSx8GuDl8SG+3Rlrm1AVfRzIWZGcU6q+swM891K4NBA23u2iCmBY4izWam5dI9YXFGJ/S3z3lTCpZss5cz3Ce6rE3V9C+4oOYf/lp5019RKyo9CF0eUSR5+743YtZbrWY0Qh1H95orqCcHrvImaGq8pgkUVQgzTH8eTQxALSVdNhAOQlAQl1Hek/utG1E6Zpbcv4/nmoRko4R1t9n7FHO0AWbBsR2iSM1nw8NcIksF/TJ41KoXh5E1OAjTfX6XsuoUYSQdm0NhsXblCApJdVvJhq7gnlegPE87dnSERuYlNFGCltEzCo1VI3IGTuw67eB2WGoKbMgsKYbDuPJ6IzpXvWgnZRPZy/iJ5wuUR/DqtrhL0adIMmhHNUNpI1ZoXcThkHYFfKxd9n+o69zSSlv+kMZiveZdEwEvC0A6YuqJwZM8VIlCmad/LIWSG0dOMyBP2IlqTP/qRQK96gpY299zJ2C2h1+5mkVrCQQ6fRHrl53WCxYfNY81S5bthBEhvLIwHJ8P9nYMOc1FKhOFX7IAfRYk7AuWanyOpcND2HHjURP5qb5y/7YtXP53IGqxVY8GDjti7ApbbZ9bsKhCpUz0Bf7rc3Fx5+Jgx/Ph7CTXA=";
+
+export function TrustedTicker({
+  logos,
+  showFadeOverlays = false,
+  backgroundColor = "#f97316",
+}: TrustedTickerProps) {
   if (logos.length === 0) return null;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimationControls();
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const startAnimation = async () => {
+      const containerWidth = containerRef.current?.scrollWidth || 0;
+      const singleSetWidth = containerWidth / 2; // We're showing 2 sets for seamless loop
+
+      await controls.start({
+        x: -singleSetWidth,
+        transition: {
+          duration: 10,
+          ease: "linear",
+          repeat: Infinity,
+          repeatType: "loop",
+        },
+      });
+    };
+
+    startAnimation();
+  }, [controls, logos]);
 
   return (
     <div className="relative h-12 overflow-hidden">
-      {/* Fade overlays */}
-      <div className="pointer-events-none absolute top-0 left-0 h-full w-12 bg-gradient-to-r from-white to-transparent z-10" />
-      <div className="pointer-events-none absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-white to-transparent z-10" />
+      {showFadeOverlays && (
+        <>
+          <div
+            className="pointer-events-none absolute top-0 left-0 h-full w-12 bg-gradient-to-r z-10"
+            style={{
+              backgroundImage: `linear-gradient(to right, ${backgroundColor}, transparent)`,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute top-0 right-0 h-full w-12 bg-gradient-to-l z-10"
+            style={{
+              backgroundImage: `linear-gradient(to left, ${backgroundColor}, transparent)`,
+            }}
+          />
+        </>
+      )}
 
       <motion.div
+        ref={containerRef}
         className="flex items-center gap-8 absolute whitespace-nowrap"
-        animate={{ x: "-100%" }}
-        transition={{
-          repeat: Infinity,
-          duration: 20,
-          ease: "linear",
-        }}
+        animate={controls}
+        style={{ x: 0 }}
       >
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="flex items-center gap-8">
-            {logos.map((logo) => (
-              <div key={logo.id} className="relative w-32 h-8 shrink-0">
-                {/* Use next/image or standard img tag */}
-                {logo.url ? (
-                  <Image
-                    src={logo.url}
-                    alt={logo.alt}
-                    fill
-                    className="object-contain"
-                  />
-                ) : (
-                  <div className="bg-gray-200 w-full h-full" />
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
+        {/* First set */}
+        <div className="flex items-center gap-8">
+          {logos.map((logo) => (
+            <div key={logo.id} className="relative w-32 h-8 shrink-0">
+              <Image
+                src={
+                  logo.url?.startsWith("/")
+                    ? DEFAULT_IMAGE
+                    : logo.url || DEFAULT_IMAGE
+                }
+                alt={logo.alt}
+                fill
+                className="object-contain"
+              />
+            </div>
+          ))}
+        </div>
+        {/* Duplicate set for seamless loop */}
+        <div className="flex items-center gap-8">
+          {logos.map((logo) => (
+            <div key={`${logo.id}-dup`} className="relative w-32 h-8 shrink-0">
+              <Image
+                src={
+                  logo.url?.startsWith("/")
+                    ? DEFAULT_IMAGE
+                    : logo.url || DEFAULT_IMAGE
+                }
+                alt={logo.alt}
+                fill
+                className="object-contain"
+              />
+            </div>
+          ))}
+        </div>
       </motion.div>
     </div>
   );
@@ -1662,9 +2005,12 @@ import {
   Zap,
 } from "lucide-react";
 import { StepConfig, TrustedLogo } from "@/lib/types";
+import { TrustedTicker } from "./trusted-ticker";
+import Image from "next/image";
 
 interface LeftPanelContentProps {
   step: StepConfig;
+  backgroundColor?: string;
 }
 
 const icons: { [key: string]: any } = {
@@ -1682,12 +2028,17 @@ const icons: { [key: string]: any } = {
   Zap,
 };
 
-export function LeftPanelContent({ step }: LeftPanelContentProps) {
+export function LeftPanelContent({
+  step,
+  backgroundColor = "#f97316",
+}: LeftPanelContentProps) {
   const content = step.panelContent as any;
+
+  const logoDisplayMode = content.logoDisplayMode || "ticker"; // default to ticker if not set
 
   if (step.panelType === "main") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <h2 className="text-4xl font-bold leading-tight text-white">
           {content.headline}
         </h2>
@@ -1703,20 +2054,34 @@ export function LeftPanelContent({ step }: LeftPanelContentProps) {
           })}
         </ul>
         {content.trustedByLogos?.length > 0 && (
-          <div className="pt-8">
+          <div className="pt-8 w-full">
             <p className="text-sm mb-3 text-white/80">
               Trusted by engineers at:
             </p>
-            <div className="flex items-center gap-6 text-white">
-              {content.trustedByLogos.map((logo: TrustedLogo) => (
-                <img
-                  key={logo.id}
-                  src={logo.url}
-                  alt={logo.alt}
-                  className="h-6 object-contain"
-                />
-              ))}
-            </div>
+            {logoDisplayMode === "ticker" ? (
+              <TrustedTicker
+                logos={content.trustedByLogos}
+                showFadeOverlays={true}
+                backgroundColor={backgroundColor}
+              />
+            ) : (
+              <div className="flex items-center gap-6 text-white flex-wrap">
+                {content.trustedByLogos.map((logo: TrustedLogo) => (
+                  <div key={logo.id} className="relative w-32 h-8">
+                    {logo.url ? (
+                      <Image
+                        src={logo.url}
+                        alt={logo.alt}
+                        fill
+                        className="object-contain invert"
+                      />
+                    ) : (
+                      <div className="bg-gray-200 w-full h-full" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1725,7 +2090,7 @@ export function LeftPanelContent({ step }: LeftPanelContentProps) {
 
   if (step.panelType === "value-props") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
         <div className="space-y-4">
           {content.stats?.map((stat: any, index: number) => {
@@ -1859,8 +2224,10 @@ export function LeftPanelContent({ step }: LeftPanelContentProps) {
 
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import Image from "next/image";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -1870,7 +2237,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormData, Step, StepConfig, FormField } from "@/lib/types";
-import { motion } from "framer-motion";
 
 interface FormStepsProps {
   step: Step;
@@ -1910,12 +2276,6 @@ export function FormSteps({
                   {currentStep.subheadline}
                 </p>
               </div>
-              <button
-                onClick={() => window.close()}
-                className="rounded-full px-8 py-4 text-lg font-semibold bg-black text-white hover:bg-black/90 transition-colors duration-200"
-              >
-                Close Modal
-              </button>
             </div>
           </motion.div>
         </div>
@@ -1923,11 +2283,11 @@ export function FormSteps({
     );
   }
 
-  // Group fields into rows
+  // Group fields into rows based on fullWidth
   const rows: FormField[][] = [];
   let currentRow: FormField[] = [];
 
-  (currentStep.fields || []).forEach((field) => {
+  currentStep.fields.forEach((field) => {
     if (field.fullWidth) {
       if (currentRow.length > 0) {
         rows.push(currentRow);
@@ -1955,18 +2315,21 @@ export function FormSteps({
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       ) => setFormData({ ...formData, [field.id]: e.target.value }),
       required: field.required,
-      className:
-        "rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200",
       placeholder:
         field.type === "email" && field.id.toLowerCase().includes("email")
           ? "johndoe@example.com"
           : "",
     };
 
+    const commonClasses =
+      "h-12 w-full rounded-md border border-gray-300 px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200";
+
     switch (field.type) {
       case "text":
       case "email":
-        return <Input {...commonProps} type={field.type} />;
+        return (
+          <Input {...commonProps} type={field.type} className={commonClasses} />
+        );
       case "select":
         return (
           <Select
@@ -1978,14 +2341,19 @@ export function FormSteps({
               })
             }
           >
-            <SelectTrigger className="w-full rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200">
+            <SelectTrigger className={commonClasses}>
               <SelectValue
                 placeholder={`Select ${field.label.toLowerCase()}`}
+                className="text-base"
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-md border-gray-300">
               {(field.options || []).map((option: string) => (
-                <SelectItem key={option} value={option}>
+                <SelectItem
+                  key={option}
+                  value={option}
+                  className="text-base py-3 px-4 focus:bg-gray-100 cursor-pointer"
+                >
                   {option}
                 </SelectItem>
               ))}
@@ -1996,7 +2364,7 @@ export function FormSteps({
         return (
           <Textarea
             {...commonProps}
-            className="min-h-[120px] rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-black focus:border-black resize-none transition-colors duration-200"
+            className="min-h-[120px] w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-black focus:border-black resize-none transition-colors duration-200"
           />
         );
       default:
@@ -2012,12 +2380,12 @@ export function FormSteps({
       <p className="text-gray-600 text-lg mb-6">{currentStep.subheadline}</p>
       <div className="space-y-6 flex-1">
         {rows.map((row, i) => (
-          <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div key={i} className="flex flex-col md:flex-row gap-4">
             {row.map((field) => (
               <div
                 key={field.id}
                 className={
-                  field.fullWidth ? "col-span-1 md:col-span-2" : "col-span-1"
+                  field.fullWidth ? "w-full px-1" : "w-full md:w-1/2 px-1"
                 }
               >
                 <div className="space-y-2">
@@ -2034,6 +2402,322 @@ export function FormSteps({
             ))}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+
+### components/signup/modal-preview.tsx
+
+"use client";
+
+import { ModalContent } from "./modal-content";
+import { ModalConfig } from "@/lib/types";
+
+interface ModalPreviewProps {
+  config: ModalConfig;
+}
+
+export function ModalPreview({ config }: ModalPreviewProps) {
+  return (
+    <div className="w-full h-full">
+      <ModalContent config={config} />
+    </div>
+  );
+}
+
+
+
+### components/signup/modal-content.tsx
+
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ModalConfig, FormData } from "@/lib/types";
+import { ArrowLeft } from "lucide-react";
+import { LeftPanelContent } from "./left-panel-content";
+
+interface ModalContentProps {
+  config: ModalConfig;
+  onSubmit?: (formData: FormData) => void;
+}
+
+export function ModalContent({ config, onSubmit }: ModalContentProps) {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  const prevStepRef = useRef<number>(step);
+  useEffect(() => {
+    prevStepRef.current = step;
+  }, [step]);
+  const direction = step > prevStepRef.current ? 1 : -1;
+
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsMobile(entry.contentRect.width < 900);
+      }
+    });
+    observer.observe(document.body);
+    return () => observer.disconnect();
+  }, []);
+
+  const totalSteps = config.steps.length;
+  const currentStepIndex = step - 1;
+  const currentStep = config.steps[currentStepIndex];
+  const progress = (step / totalSteps) * 100;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step === totalSteps) {
+      onSubmit?.(formData);
+    } else {
+      setStep((prev) => prev + 1);
+    }
+  };
+
+  const leftVariants = {
+    enter: (direction: number) => ({
+      y: direction > 0 ? -50 : 50,
+      opacity: 0,
+    }),
+    center: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    },
+    exit: (direction: number) => ({
+      y: direction > 0 ? 50 : -50,
+      opacity: 0,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    }),
+  };
+
+  const rightVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 50 : -50,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -50 : 50,
+      opacity: 0,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    }),
+  };
+
+  const renderFormFields = () => {
+    if (currentStepIndex === 0) {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="email">Work Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              placeholder="you@company.com"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                type="text"
+                value={formData.firstName || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                type="text"
+                value={formData.lastName || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
+                }
+                required
+              />
+            </div>
+          </div>
+        </div>
+      );
+    } else if (currentStepIndex === 1) {
+      return (
+        <div>
+          <Label htmlFor="currentModels">Current Models</Label>
+          <Select
+            value={formData.currentModels || ""}
+            onValueChange={(value) =>
+              setFormData({ ...formData, currentModels: value })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select the models you use" />
+            </SelectTrigger>
+            <SelectContent>
+              {currentStep.fields[0].options?.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
+      {/* Left Panel */}
+      {!isMobile && (
+        <div
+          className="relative"
+          style={{
+            background:
+              typeof config.style?.leftPanelColor === "string" &&
+              config.style.leftPanelColor.includes("gradient")
+                ? config.style.leftPanelColor
+                : config.style?.leftPanelColor,
+          }}
+        >
+          <div className="relative w-full h-full p-6 sm:p-12 overflow-y-auto">
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={step + "-left"}
+                custom={direction}
+                variants={leftVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full h-full"
+              >
+                {currentStep && (
+                  <LeftPanelContent
+                    step={currentStep}
+                    backgroundColor={config.style?.leftPanelColor}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
+
+      {/* Right Panel */}
+      <div
+        className="relative min-h-screen"
+        style={{ backgroundColor: config.style?.rightPanelMainColor }}
+      >
+        <div className="h-full flex flex-col">
+          {/* Header Section */}
+          <div className="px-6 sm:px-12 pt-10">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                {step > 1 && (
+                  <button
+                    onClick={() => setStep((prev) => prev - 1)}
+                    className="text-gray-600 hover:text-gray-900 transition-colors duration-200 -ml-1"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <div className="h-2 flex-1 bg-gray-100 rounded-full">
+                  <div
+                    className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+              {/* Brand Header */}
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  {config.branding?.logo ? (
+                    <img
+                      src={config.branding.logo}
+                      alt={config.branding?.companyName || "Company Logo"}
+                      className="h-8 w-auto object-contain"
+                    />
+                  ) : (
+                    <span className="text-xl font-semibold text-gray-900">
+                      {config.branding?.companyName || "OpenPipe"}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2.5 w-full h-[1px] bg-gray-200"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="flex-1 relative overflow-y-auto">
+            <AnimatePresence initial={false} custom={direction} mode="wait">
+              <motion.div
+                key={step + "-right"}
+                custom={direction}
+                variants={rightVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="absolute inset-0 px-6 sm:px-12 pt-8 pb-8"
+              >
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col min-h-full"
+                >
+                  <div className="flex-1 space-y-6">
+                    <div>
+                      <h2 className="text-2xl font-semibold">
+                        {currentStep.headline}
+                      </h2>
+                      <p className="text-gray-600 mt-2">
+                        {currentStep.subheadline}
+                      </p>
+                    </div>
+                    <div className="pt-2">{renderFormFields()}</div>
+                  </div>
+
+                  <div className="flex justify-end pt-6 mt-auto">
+                    <Button
+                      type="submit"
+                      className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
+                    >
+                      {step === totalSteps ? "Submit" : "Continue"}
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -2173,7 +2857,7 @@ export function SignupModal({
 
   return (
     <div
-      className={`rounded-lg border shadow-sm ${
+      className={`overflow-hidden rounded-lg border shadow-sm ${
         isMobile ? "max-w-[420px]" : "max-w-[1200px]"
       } mx-auto relative`}
       style={{ backgroundColor: rightPanelColor }}
@@ -2182,10 +2866,10 @@ export function SignupModal({
         {/* Left Panel */}
         {!isMobile && (
           <div
-            className={`relative ${leftPanelPadding}`}
+            className="relative rounded-l-lg overflow-hidden"
             style={{ backgroundColor: leftPanelColor }}
           >
-            <div className="relative w-full h-full overflow-hidden">
+            <div className={`relative w-full h-full ${leftPanelPadding}`}>
               <AnimatePresence custom={direction} mode="sync">
                 <motion.div
                   key={step + "-left"}
@@ -2203,51 +2887,50 @@ export function SignupModal({
           </div>
         )}
 
-        {/* Right Panel with overflow-auto */}
-        <div className="p-10 flex flex-col rounded-r-lg relative overflow-auto">
-          <div className="space-y-8 flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <AnimatePresence mode="wait">
-                {step > 1 && (
-                  <motion.button
-                    key={step + "-backbtn"}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={handleBack}
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-              <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: "#000000" }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
+        {/* Right Panel */}
+        <div className="relative rounded-r-lg overflow-hidden">
+          <div className="h-full flex flex-col">
+            {/* Header Section */}
+            <div className="px-12 pt-10">
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  {step > 1 && (
+                    <button
+                      onClick={handleBack}
+                      className="text-gray-600 hover:text-gray-900 transition-colors duration-200 -ml-1"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <div className="h-2 flex-1 bg-gray-100 rounded-full">
+                    <div
+                      className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+                {/* Brand Header */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    {config.branding?.logo ? (
+                      <img
+                        src={config.branding.logo}
+                        alt={config.branding?.companyName || "Company Logo"}
+                        className="h-8 w-auto object-contain"
+                      />
+                    ) : (
+                      <span className="text-xl font-semibold text-gray-900">
+                        {config.branding?.companyName || "OpenPipe"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2.5 w-full h-[1px] bg-gray-200"></div>
+                </div>
               </div>
             </div>
-            {/* Brand Header */}
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold text-gray-900">
-                  OpenPipe
-                </span>
-              </div>
-              <div className="mt-2 w-full h-[2px] bg-gray-100"></div>
-            </div>
-          </div>
 
-          <motion.form
-            onSubmit={handleSubmit}
-            className="mt-8 flex-1 flex flex-col relative"
-          >
-            <div className="relative flex-1 overflow-auto">
+            {/* Content Section */}
+            <div className="flex-1 relative overflow-hidden">
               <AnimatePresence custom={direction} mode="sync">
                 <motion.div
                   key={step + "-right"}
@@ -2256,40 +2939,35 @@ export function SignupModal({
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="space-y-4 flex-1 flex flex-col"
+                  className="h-full flex flex-col px-12 pt-8"
                 >
-                  <FormSteps
-                    step={step}
-                    formData={formData}
-                    setFormData={setFormData}
-                    currentColor="#000000"
-                    config={config.steps}
-                  />
+                  <motion.form
+                    onSubmit={handleSubmit}
+                    className="flex flex-col"
+                  >
+                    <div>
+                      <FormSteps
+                        step={step}
+                        formData={formData}
+                        setFormData={setFormData}
+                        currentColor="#000000"
+                        config={config.steps}
+                      />
+                    </div>
+
+                    <div className="flex justify-end mt-8">
+                      <Button
+                        type="submit"
+                        className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
+                      >
+                        {step === totalSteps ? "Submit" : "Continue"}
+                      </Button>
+                    </div>
+                  </motion.form>
                 </motion.div>
               </AnimatePresence>
             </div>
-
-            {step < totalSteps && (
-              <div className="flex justify-end pt-4 mt-auto">
-                <Button
-                  type="submit"
-                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:bg-black/90 transition-colors duration-200"
-                >
-                  Continue
-                </Button>
-              </div>
-            )}
-            {step === totalSteps && (
-              <div className="flex justify-end pt-4 mt-auto">
-                <Button
-                  type="submit"
-                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:bg-black/90 transition-colors duration-200"
-                >
-                  Submit
-                </Button>
-              </div>
-            )}
-          </motion.form>
+          </div>
         </div>
       </div>
       <div className="fixed top-4 right-4 flex items-center gap-2 p-1.5 bg-white rounded-lg shadow-md border">
@@ -2310,6 +2988,21 @@ export function SignupModal({
           <Smartphone className="w-4 h-4" />
         </Button>
       </div>
+    </div>
+  );
+}
+
+
+
+### components/signup/trusted-example.tsx
+
+import { TrustedTicker } from "./trusted-ticker";
+import { placeholderLogos } from "@/lib/placeholder-logos";
+
+export function TrustedExample() {
+  return (
+    <div className="bg-[#f97316] p-8">
+      <TrustedTicker logos={placeholderLogos} showFadeOverlays={true} />
     </div>
   );
 }

@@ -43,9 +43,8 @@ export function LeftPanelContent({
   step,
   backgroundColor = "#f97316",
 }: LeftPanelContentProps) {
-  const content = step.panelContent as any;
-
-  const logoDisplayMode = content.logoDisplayMode || "ticker"; // default to ticker if not set
+  const content = step.panelContent || {};
+  const logoDisplayMode = content?.logoDisplayMode || "ticker";
 
   if (step.panelType === "main") {
     return (
