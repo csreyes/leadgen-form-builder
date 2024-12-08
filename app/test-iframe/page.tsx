@@ -90,7 +90,7 @@ const config: ModalConfig = {
     },
   ],
   style: {
-    leftPanelColor: "linear-gradient(45deg, #000000, #1a1a1a)",
+    leftPanelColor: "#f97316",
     rightPanelMainColor: "#FFFFFF",
   },
   branding: {

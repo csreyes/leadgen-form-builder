@@ -8,6 +8,7 @@ import { TrustedLogo } from "@/lib/types";
 interface TrustedTickerProps {
   logos: TrustedLogo[];
   showFadeOverlays?: boolean;
+  backgroundColor?: string;
 }
 
 const DEFAULT_IMAGE =
@@ -16,6 +17,7 @@ const DEFAULT_IMAGE =
 export function TrustedTicker({
   logos,
   showFadeOverlays = false,
+  backgroundColor = "#f97316",
 }: TrustedTickerProps) {
   if (logos.length === 0) return null;
 
@@ -27,12 +29,12 @@ export function TrustedTicker({
 
     const startAnimation = async () => {
       const containerWidth = containerRef.current?.scrollWidth || 0;
-      const singleSetWidth = containerWidth / 4; // Since we're showing 4 sets
+      const singleSetWidth = containerWidth / 2; // We're showing 2 sets for seamless loop
 
       await controls.start({
         x: -singleSetWidth,
         transition: {
-          duration: 10,
+          duration: 20,
           ease: "linear",
           repeat: Infinity,
           repeatType: "loop",
@@ -47,8 +49,18 @@ export function TrustedTicker({
     <div className="relative h-12 overflow-hidden">
       {showFadeOverlays && (
         <>
-          <div className="pointer-events-none absolute top-0 left-0 h-full w-12 bg-gradient-to-r from-[#f97316] to-transparent z-10" />
-          <div className="pointer-events-none absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-[#f97316] to-transparent z-10" />
+          <div
+            className="pointer-events-none absolute top-0 left-0 h-full w-12 bg-gradient-to-r z-10"
+            style={{
+              backgroundImage: `linear-gradient(to right, ${backgroundColor}, transparent)`,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute top-0 right-0 h-full w-12 bg-gradient-to-l z-10"
+            style={{
+              backgroundImage: `linear-gradient(to left, ${backgroundColor}, transparent)`,
+            }}
+          />
         </>
       )}
 
@@ -56,28 +68,45 @@ export function TrustedTicker({
         ref={containerRef}
         className="flex items-center gap-8 absolute whitespace-nowrap"
         animate={controls}
+        style={{ x: 0 }}
       >
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center gap-8">
-            {logos.map((logo) => (
-              <div
-                key={`${logo.id}-${i}`}
-                className="relative w-32 h-8 shrink-0"
-              >
-                <Image
-                  src={
-                    logo.url?.startsWith("/")
-                      ? DEFAULT_IMAGE
-                      : logo.url || DEFAULT_IMAGE
-                  }
-                  alt={logo.alt}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            ))}
-          </div>
-        ))}
+        {/* First set */}
+        <div className="flex items-center gap-8">
+          {logos.map((logo) => (
+            <div key={logo.id} className="relative w-32 h-8 shrink-0 invert">
+              <Image
+                src={
+                  logo.url?.startsWith("/")
+                    ? DEFAULT_IMAGE
+                    : logo.url || DEFAULT_IMAGE
+                }
+                alt={logo.alt}
+                fill
+                className="object-contain"
+              />
+            </div>
+          ))}
+        </div>
+        {/* Duplicate set for seamless loop */}
+        <div className="flex items-center gap-8">
+          {logos.map((logo) => (
+            <div
+              key={`${logo.id}-dup`}
+              className="relative w-32 h-8 shrink-0 invert"
+            >
+              <Image
+                src={
+                  logo.url?.startsWith("/")
+                    ? DEFAULT_IMAGE
+                    : logo.url || DEFAULT_IMAGE
+                }
+                alt={logo.alt}
+                fill
+                className="object-contain"
+              />
+            </div>
+          ))}
+        </div>
       </motion.div>
     </div>
   );

@@ -186,7 +186,12 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 exit="exit"
                 className="w-full h-full"
               >
-                {currentStep && <LeftPanelContent step={currentStep} />}
+                {currentStep && (
+                  <LeftPanelContent
+                    step={currentStep}
+                    backgroundColor={config.style?.leftPanelColor}
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
           </div>

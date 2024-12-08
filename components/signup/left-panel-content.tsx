@@ -21,6 +21,7 @@ import Image from "next/image";
 
 interface LeftPanelContentProps {
   step: StepConfig;
+  backgroundColor?: string;
 }
 
 const icons: { [key: string]: any } = {
@@ -38,7 +39,10 @@ const icons: { [key: string]: any } = {
   Zap,
 };
 
-export function LeftPanelContent({ step }: LeftPanelContentProps) {
+export function LeftPanelContent({
+  step,
+  backgroundColor = "#f97316",
+}: LeftPanelContentProps) {
   const content = step.panelContent as any;
 
   const logoDisplayMode = content.logoDisplayMode || "ticker"; // default to ticker if not set
@@ -69,6 +73,7 @@ export function LeftPanelContent({ step }: LeftPanelContentProps) {
               <TrustedTicker
                 logos={content.trustedByLogos}
                 showFadeOverlays={true}
+                backgroundColor={backgroundColor}
               />
             ) : (
               <div className="flex items-center gap-6 text-white flex-wrap">
