@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { type StepConfig, type PanelType } from "@/lib/types";
 import { TrustedLogos } from "./trusted-logos";
+import { Switch } from "@/components/ui/switch";
 
 interface LeftPanelBuilderProps {
   step: StepConfig;
@@ -128,7 +129,32 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
         </Select>
       </div>
 
-      {step.panelType === "main" && (
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={!!step.inheritPreviousPanel}
+          onCheckedChange={(checked) =>
+            onChange({ inheritPreviousPanel: checked })
+          }
+        />
+        <Label>Inherit Previous Panel</Label>
+      </div>
+
+      {!step.inheritPreviousPanel && (
+        <div className="space-y-2">
+          <Label>Panel Background Color</Label>
+          <Input
+            type="text"
+            value={step.panelBackgroundColor || ""}
+            onChange={(e) => onChange({ panelBackgroundColor: e.target.value })}
+            placeholder="#f97316"
+          />
+          <p className="text-sm text-gray-500">
+            Enter a valid CSS color (e.g. #f97316, rgb(249,115,22), etc.)
+          </p>
+        </div>
+      )}
+
+      {step.panelType === "main" && !step.inheritPreviousPanel && (
         <Card className="p-4 space-y-4">
           <div className="space-y-2">
             <Label>Headline</Label>
@@ -144,7 +170,9 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const valueProps = [...(step.panelContent as any).valueProps];
+                  const valueProps = [
+                    ...((step.panelContent as any).valueProps || []),
+                  ];
                   valueProps.push({ icon: "Star", text: "" });
                   updatePanelContent({ valueProps });
                 }}
@@ -153,7 +181,7 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                 Add Value Prop
               </Button>
             </div>
-            {(step.panelContent as any).valueProps?.map(
+            {((step.panelContent as any).valueProps || []).map(
               (prop: any, index: number) => (
                 <Card key={index} className="p-4">
                   <div className="flex gap-4">
@@ -202,6 +230,26 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
               )
             )}
           </div>
+
+          {/* Add a toggle for Ticker vs Static */}
+          <div className="space-y-2">
+            <Label>Logo Display Mode</Label>
+            <Select
+              value={(step.panelContent as any).logoDisplayMode || "ticker"}
+              onValueChange={(val) =>
+                updatePanelContent({ logoDisplayMode: val })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Display Mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ticker">Ticker (Animated)</SelectItem>
+                <SelectItem value="static">Static (No Animation)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <TrustedLogos
             logos={(step.panelContent as any).trustedByLogos || []}
             onChange={(logos) => updatePanelContent({ trustedByLogos: logos })}
@@ -345,6 +393,174 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                 })
               }
             />
+          </div>
+        </Card>
+      )}
+
+      {step.panelType === "features" && (
+        <Card className="p-4 space-y-4">
+          <div className="space-y-2">
+            <Label>Headline</Label>
+            <Input
+              value={(step.panelContent as any).headline}
+              onChange={(e) => updatePanelContent({ headline: e.target.value })}
+            />
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Label>Features</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const features = [...(step.panelContent as any).features];
+                  features.push({ title: "", description: "", icon: "Star" });
+                  updatePanelContent({ features });
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Feature
+              </Button>
+            </div>
+            {(step.panelContent as any).features?.map(
+              (feature: any, index: number) => (
+                <Card key={index} className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      value={feature.title}
+                      onChange={(e) => {
+                        const features = [
+                          ...(step.panelContent as any).features,
+                        ];
+                        features[index].title = e.target.value;
+                        updatePanelContent({ features });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Input
+                      value={feature.description}
+                      onChange={(e) => {
+                        const features = [
+                          ...(step.panelContent as any).features,
+                        ];
+                        features[index].description = e.target.value;
+                        updatePanelContent({ features });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Icon</Label>
+                    <Input
+                      value={feature.icon}
+                      onChange={(e) => {
+                        const features = [
+                          ...(step.panelContent as any).features,
+                        ];
+                        features[index].icon = e.target.value;
+                        updatePanelContent({ features });
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-500 hover:text-red-600"
+                    onClick={() => {
+                      const features = [...(step.panelContent as any).features];
+                      features.splice(index, 1);
+                      updatePanelContent({ features });
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </Card>
+              )
+            )}
+          </div>
+        </Card>
+      )}
+
+      {step.panelType === "success" && (
+        <Card className="p-4 space-y-4">
+          <div className="space-y-2">
+            <Label>Headline</Label>
+            <Input
+              value={(step.panelContent as any).headline}
+              onChange={(e) => updatePanelContent({ headline: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Subheadline</Label>
+            <Input
+              value={(step.panelContent as any).subheadline}
+              onChange={(e) =>
+                updatePanelContent({ subheadline: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Label>Features</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const features = [...(step.panelContent as any).features];
+                  features.push({ title: "", icon: "Star" });
+                  updatePanelContent({ features });
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Feature
+              </Button>
+            </div>
+            {(step.panelContent as any).features?.map(
+              (feature: any, index: number) => (
+                <Card key={index} className="p-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      value={feature.title}
+                      onChange={(e) => {
+                        const features = [
+                          ...(step.panelContent as any).features,
+                        ];
+                        features[index].title = e.target.value;
+                        updatePanelContent({ features });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Icon</Label>
+                    <Input
+                      value={feature.icon}
+                      onChange={(e) => {
+                        const features = [
+                          ...(step.panelContent as any).features,
+                        ];
+                        features[index].icon = e.target.value;
+                        updatePanelContent({ features });
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-500 hover:text-red-600"
+                    onClick={() => {
+                      const features = [...(step.panelContent as any).features];
+                      features.splice(index, 1);
+                      updatePanelContent({ features });
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </Card>
+              )
+            )}
           </div>
         </Card>
       )}

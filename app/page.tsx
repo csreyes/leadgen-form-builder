@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { SignupModal } from "@/components/signup/signup-modal";
 import { ModalBuilder } from "@/components/builder/modal-builder";
-import { ModalConfig, StepConfig, Step } from "@/lib/types";
+import { ModalConfig, StepConfig, Step, TrustedLogo } from "@/lib/types";
+
+// Example trusted logos as objects with url/alt:
+const sampleLogos: TrustedLogo[] = [
+  { id: "logo1", url: "/logo1.png", alt: "Company 1" },
+  { id: "logo2", url: "/logo2.png", alt: "Company 2" },
+];
 
 const defaultPanelContent = {
   main: {
@@ -14,7 +19,7 @@ const defaultPanelContent = {
       { icon: "DollarSign", text: "Save time and money" },
       { icon: "Sparkles", text: "Get higher quality than OpenAI" },
     ],
-    trustedByLogos: [],
+    trustedByLogos: sampleLogos,
   },
   "value-props": {
     headline: "Why use OpenPipe?",
@@ -74,14 +79,6 @@ const defaultPanelContent = {
   },
 };
 
-const defaultStep: StepConfig = {
-  headline: "New Step",
-  subheadline: "",
-  panelType: "main",
-  panelContent: defaultPanelContent.main,
-  fields: [],
-};
-
 const defaultConfig: ModalConfig = {
   headline: "Train faster, cheaper models on production data",
   valueProps: [
@@ -90,7 +87,7 @@ const defaultConfig: ModalConfig = {
     { icon: "Sparkles", text: "Get higher quality than OpenAI" },
   ],
   logo: "",
-  trustedByLogos: [],
+  trustedByLogos: sampleLogos,
   steps: [
     {
       headline: "Let's get started",
@@ -131,7 +128,7 @@ const defaultConfig: ModalConfig = {
         {
           id: "currentModels",
           label: "Models",
-          type: "multi-select",
+          type: "select", // treat multi-select as single for simplicity
           required: true,
           fullWidth: true,
           options: ["GPT-4", "GPT-3.5", "Claude", "Mixtral", "Gemini", "Other"],

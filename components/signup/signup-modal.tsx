@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { type FormData, type Step, type ModalConfig } from "@/lib/types";
@@ -8,97 +8,59 @@ import { ArrowLeft, Monitor, Smartphone } from "lucide-react";
 import { LeftPanelContent } from "./left-panel-content";
 import { FormSteps } from "./form-steps";
 
-const STEPS = 5;
-
-const slideVariants = {
-  enter: (direction: number) => ({
-    y: direction > 0 ? "-20%" : "20%",
-    opacity: 0,
-  }),
-  center: {
-    y: 0,
-    opacity: 1,
-  },
-  exit: (direction: number) => ({
-    y: direction < 0 ? "-20%" : "20%",
-    opacity: 0,
-  }),
-};
-
-const transition = {
-  y: { type: "tween", duration: 0.3, ease: "easeInOut" },
-  opacity: { duration: 0.3 },
-};
-
-const colors = {
-  orange: "#f97316",
-  purple: "#9333ea",
-};
-
-const defaultConfig: ModalConfig = {
-  headline: "Train faster, cheaper models on production data",
-  valueProps: [
-    { icon: "Layers", text: "Train & deploy fine-tuned models" },
-    { icon: "DollarSign", text: "Save time and money" },
-    { icon: "Sparkles", text: "Get higher quality than OpenAI" },
-  ],
-  logo: "",
-  trustedByLogos: [],
-  steps: [
-    {
-      headline: "Let's get started",
-      subheadline:
-        "Please answer a few questions so we can create your account.",
-      panelType: "main",
-      panelContent: {
-        headline: "Train faster, cheaper models on production data",
-        valueProps: [
-          { icon: "Layers", text: "Train & deploy fine-tuned models" },
-          { icon: "DollarSign", text: "Save time and money" },
-          { icon: "Sparkles", text: "Get higher quality than OpenAI" },
-        ],
-        trustedByLogos: [],
-      },
-      fields: [],
-    },
-  ],
-};
-
 interface SignupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  config?: ModalConfig;
+  config: ModalConfig;
   initialStep?: Step;
 }
 
 export function SignupModal({
   open,
   onOpenChange,
-  config = defaultConfig,
+  config,
   initialStep = 1,
 }: SignupModalProps) {
   const [step, setStep] = useState<Step>(initialStep);
   const [isMobile, setIsMobile] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    email: "",
-    firstName: "",
-    lastName: "",
-    currentModels: [],
-    dailyCalls: "",
-    source: "",
-    comments: "",
-  });
+  const [formData, setFormData] = useState<FormData>({});
 
+  const totalSteps = config.steps.length;
+  const currentStepIndex = step - 1;
+  const currentStep = config.steps[currentStepIndex];
+
+  // Compute effective step if inheritPreviousPanel is true
+  const effectiveStep = useMemo(() => {
+    if (currentStep?.inheritPreviousPanel && currentStepIndex > 0) {
+      const prevStep = config.steps[currentStepIndex - 1];
+      return {
+        ...prevStep,
+        ...currentStep,
+        fields: currentStep.fields,
+        inheritPreviousPanel: currentStep.inheritPreviousPanel,
+        panelBackgroundColor:
+          currentStep.panelBackgroundColor ?? prevStep.panelBackgroundColor,
+      };
+    }
+    return currentStep;
+  }, [config, currentStepIndex, currentStep]);
+
+  const prevStepRef = useRef<Step>(step);
   useEffect(() => {
-    setStep(initialStep);
-  }, [initialStep]);
+    prevStepRef.current = step;
+  }, [step]);
+  const direction = step > prevStepRef.current ? 1 : -1;
 
-  const progress = (step / STEPS) * 100;
-  const currentColor = step % 2 === 0 ? colors.purple : colors.orange;
-  const currentStep = config.steps[step - 1];
+  const leftPanelPadding = config.style?.leftPanelPadding || "p-12";
+  const leftPanelColor =
+    effectiveStep?.panelBackgroundColor ??
+    config.style?.leftPanelColor ??
+    "#f97316";
+
+  const rightPanelColor = config.style?.rightPanelMainColor || "#ffffff";
 
   const handleNext = () => {
-    if (step < STEPS) {
+    if (step < totalSteps) {
       setStep((prev) => (prev + 1) as Step);
     }
   };
@@ -111,9 +73,9 @@ export function SignupModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step === STEPS - 1) {
+    if (step === totalSteps) {
       console.log(formData);
-      handleNext();
+      onOpenChange(false);
     } else {
       handleNext();
     }
@@ -121,40 +83,89 @@ export function SignupModal({
 
   if (!open) return null;
 
+  // Animations
+  const leftVariants = {
+    enter: (dir: number) => ({
+      y: dir > 0 ? -50 : 50,
+      opacity: 0,
+      position: "absolute" as const,
+    }),
+    center: {
+      y: 0,
+      opacity: 1,
+      position: "relative" as const,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    },
+    exit: (dir: number) => ({
+      y: dir > 0 ? 50 : -50,
+      opacity: 0,
+      position: "absolute" as const,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    }),
+  };
+
+  const rightVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? 50 : -50,
+      opacity: 0,
+      position: "absolute" as const,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      position: "relative" as const,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? -50 : 50,
+      opacity: 0,
+      position: "absolute" as const,
+      transition: { duration: 0.4, ease: "easeInOut" },
+    }),
+  };
+
+  const progress = (step / totalSteps) * 100;
+
   return (
     <div
-      className={`overflow-hidden rounded-lg border shadow-sm ${
+      className={`rounded-lg border shadow-sm ${
         isMobile ? "max-w-[420px]" : "max-w-[1200px]"
       } mx-auto relative`}
+      style={{ backgroundColor: rightPanelColor }}
     >
       <div className={`grid ${isMobile ? "" : "sm:grid-cols-2"} min-h-[600px]`}>
+        {/* Left Panel */}
         {!isMobile && (
           <div
-            className="relative overflow-hidden transition-colors duration-300 ease-in-out"
-            style={{ backgroundColor: currentColor }}
+            className={`relative ${leftPanelPadding}`}
+            style={{ backgroundColor: leftPanelColor }}
           >
-            <AnimatePresence custom={step} mode="popLayout" initial={false}>
-              <motion.div
-                key={step}
-                custom={step}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={transition}
-                className="absolute inset-0 p-16"
-              >
-                {currentStep && <LeftPanelContent step={currentStep} />}
-              </motion.div>
-            </AnimatePresence>
+            <div className="relative w-full h-full overflow-hidden">
+              <AnimatePresence custom={direction} mode="sync">
+                <motion.div
+                  key={step + "-left"}
+                  custom={direction}
+                  variants={leftVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="w-full h-full"
+                >
+                  {effectiveStep && <LeftPanelContent step={effectiveStep} />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         )}
-        <div className="p-10 bg-white overflow-hidden flex flex-col">
-          <div className="space-y-8">
+
+        {/* Right Panel with overflow-auto */}
+        <div className="p-10 flex flex-col rounded-r-lg relative overflow-auto">
+          <div className="space-y-8 flex-shrink-0">
             <div className="flex items-center gap-4">
               <AnimatePresence mode="wait">
                 {step > 1 && (
                   <motion.button
+                    key={step + "-backbtn"}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
@@ -166,62 +177,74 @@ export function SignupModal({
                   </motion.button>
                 )}
               </AnimatePresence>
-              <div
-                className={`h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden ${
-                  !isMobile ? "min-w-[482px]" : "min-w-[300px]"
-                }`}
-              >
+              <div className="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ backgroundColor: currentColor }}
+                  style={{ backgroundColor: "#000000" }}
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-8 h-8 rounded-lg"
-                style={{ backgroundColor: currentColor }}
-              />
-              <span className="text-xl font-semibold">OpenPipe</span>
+            {/* Brand Header */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-semibold text-gray-900">
+                  OpenPipe
+                </span>
+              </div>
+              <div className="mt-2 w-full h-[2px] bg-gray-100"></div>
             </div>
           </div>
-          <form onSubmit={handleSubmit} className="mt-8 flex-1 flex flex-col">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`right-${step}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-4 flex-1 flex flex-col"
-              >
-                <FormSteps
-                  step={step}
-                  formData={formData}
-                  setFormData={setFormData}
-                  currentColor={currentColor}
-                  config={config.steps}
-                />
-              </motion.div>
-            </AnimatePresence>
-            {step < STEPS && (
+
+          <motion.form
+            onSubmit={handleSubmit}
+            className="mt-8 flex-1 flex flex-col relative"
+          >
+            <div className="relative flex-1 overflow-auto">
+              <AnimatePresence custom={direction} mode="sync">
+                <motion.div
+                  key={step + "-right"}
+                  custom={direction}
+                  variants={rightVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="space-y-4 flex-1 flex flex-col"
+                >
+                  <FormSteps
+                    step={step}
+                    formData={formData}
+                    setFormData={setFormData}
+                    currentColor="#000000"
+                    config={config.steps}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {step < totalSteps && (
               <div className="flex justify-end pt-4 mt-auto">
                 <Button
                   type="submit"
-                  className="rounded-full px-8 py-6 text-lg"
-                  style={{
-                    backgroundColor: currentColor,
-                    color: "white",
-                  }}
+                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:bg-black/90 transition-colors duration-200"
                 >
-                  {step === STEPS - 1 ? "Submit" : "Continue"}
+                  Continue
                 </Button>
               </div>
             )}
-          </form>
+            {step === totalSteps && (
+              <div className="flex justify-end pt-4 mt-auto">
+                <Button
+                  type="submit"
+                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:bg-black/90 transition-colors duration-200"
+                >
+                  Submit
+                </Button>
+              </div>
+            )}
+          </motion.form>
         </div>
       </div>
       <div className="fixed top-4 right-4 flex items-center gap-2 p-1.5 bg-white rounded-lg shadow-md border">
@@ -229,7 +252,7 @@ export function SignupModal({
           variant={isMobile ? "ghost" : "secondary"}
           size="sm"
           onClick={() => setIsMobile(false)}
-          className="rounded-md"
+          className="rounded-md hover:bg-gray-100 transition-colors duration-200"
         >
           <Monitor className="w-4 h-4" />
         </Button>
@@ -237,7 +260,7 @@ export function SignupModal({
           variant={isMobile ? "secondary" : "ghost"}
           size="sm"
           onClick={() => setIsMobile(true)}
-          className="rounded-md"
+          className="rounded-md hover:bg-gray-100 transition-colors duration-200"
         >
           <Smartphone className="w-4 h-4" />
         </Button>

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "compile-for-llm": "echo '# Project Files Content' > llm.md && echo '\\n## App Directory\\n' >> llm.md && find app -type f \\( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \\) -not -path '*/ui/*' -exec sh -c 'echo \"### $1\\n\" >> llm.md && cat \"$1\" >> llm.md && echo \"\\n\\n\" >> llm.md' sh {} \\; && echo '\\n## Components/Builder Directory\\n' >> llm.md && find components/builder -type f \\( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \\) -exec sh -c 'echo \"### $1\\n\" >> llm.md && cat \"$1\" >> llm.md && echo \"\\n\\n\" >> llm.md' sh {} \\; && echo '\\n## Components/Signup Directory\\n' >> llm.md && find components/signup -type f \\( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' \\) -exec sh -c 'echo \"### $1\\n\" >> llm.md && cat \"$1\" >> llm.md && echo \"\\n\\n\" >> llm.md' sh {} \\;"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

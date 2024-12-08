@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +30,10 @@ export function FormSteps({
 }: FormStepsProps) {
   const currentStep = config[step - 1];
 
-  if (step === 5) {
+  if (!currentStep) return null;
+
+  if (step === config.length) {
+    // last step (success)
     return (
       <div className="flex-1 flex flex-col w-full">
         <div className="space-y-6 flex-1">
@@ -49,14 +51,12 @@ export function FormSteps({
                   {currentStep.subheadline}
                 </p>
               </div>
-              <Button
+              <button
                 onClick={() => window.close()}
-                variant="default"
-                size="lg"
-                className="rounded-full mb-8"
+                className="rounded-full px-8 py-4 text-lg font-semibold bg-black text-white hover:bg-black/90 transition-colors duration-200"
               >
                 Close Modal
-              </Button>
+              </button>
             </div>
           </motion.div>
         </div>
@@ -64,11 +64,11 @@ export function FormSteps({
     );
   }
 
-  // Group fields into rows based on fullWidth property
+  // Group fields into rows
   const rows: FormField[][] = [];
   let currentRow: FormField[] = [];
 
-  currentStep.fields.forEach((field) => {
+  (currentStep.fields || []).forEach((field) => {
     if (field.fullWidth) {
       if (currentRow.length > 0) {
         rows.push(currentRow);
@@ -89,7 +89,7 @@ export function FormSteps({
   }
 
   const renderField = (field: FormField) => {
-    const commonInputProps = {
+    const commonProps = {
       id: field.id,
       value: (formData as any)[field.id] || "",
       onChange: (
@@ -97,38 +97,35 @@ export function FormSteps({
       ) => setFormData({ ...formData, [field.id]: e.target.value }),
       required: field.required,
       className:
-        "rounded-full border-gray-200 bg-white focus:ring-2 focus:ring-offset-0",
-      style: {
-        "--tw-ring-color": currentColor,
-        "--tw-ring-opacity": "0.2",
-        borderColor: (formData as any)[field.id] ? currentColor : undefined,
-      } as any,
+        "rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200",
+      placeholder:
+        field.type === "email" && field.id.toLowerCase().includes("email")
+          ? "johndoe@example.com"
+          : "",
     };
 
     switch (field.type) {
       case "text":
-        return <Input {...commonInputProps} />;
       case "email":
-        return <Input {...commonInputProps} type="email" />;
+        return <Input {...commonProps} type={field.type} />;
       case "select":
-      case "multi-select":
         return (
           <Select
-            value={(formData as any)[field.id]}
+            value={(formData as any)[field.id] || ""}
             onValueChange={(value) =>
               setFormData({
                 ...formData,
-                [field.id]: field.type === "multi-select" ? [value] : value,
+                [field.id]: value,
               })
             }
           >
-            <SelectTrigger className="w-full rounded-full">
+            <SelectTrigger className="w-full rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200">
               <SelectValue
                 placeholder={`Select ${field.label.toLowerCase()}`}
               />
             </SelectTrigger>
             <SelectContent>
-              {field.options?.map((option: string) => (
+              {(field.options || []).map((option: string) => (
                 <SelectItem key={option} value={option}>
                   {option}
                 </SelectItem>
@@ -139,8 +136,8 @@ export function FormSteps({
       case "textarea":
         return (
           <Textarea
-            {...commonInputProps}
-            className="min-h-[120px] rounded-2xl border-gray-200 bg-white focus:ring-2 focus:ring-offset-0 resize-none"
+            {...commonProps}
+            className="min-h-[120px] rounded-full border border-gray-300 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-black focus:border-black resize-none transition-colors duration-200"
           />
         );
       default:
@@ -155,8 +152,8 @@ export function FormSteps({
       </h2>
       <p className="text-gray-600 text-lg mb-6">{currentStep.subheadline}</p>
       <div className="space-y-6 flex-1">
-        {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {rows.map((row, i) => (
+          <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {row.map((field) => (
               <div
                 key={field.id}
@@ -165,7 +162,10 @@ export function FormSteps({
                 }
               >
                 <div className="space-y-2">
-                  <Label htmlFor={field.id} className="text-gray-700">
+                  <Label
+                    htmlFor={field.id}
+                    className="text-gray-700 font-medium"
+                  >
                     {field.label}{" "}
                     {field.required && <span className="text-red-500">*</span>}
                   </Label>
