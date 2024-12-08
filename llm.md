@@ -2,32 +2,169 @@
 
 ## App Directory
 
+### app/embed/[id]/client-modal.tsx
+
+"use client";
+
+import { ModalContent } from "@/components/signup/modal-content";
+import { FormData, ModalConfig } from "@/lib/types";
+
+export function ClientModalContent({ config }: { config: ModalConfig }) {
+  const handleSubmit = async (formData: FormData) => {
+    console.log("Form submitted:", formData);
+    // Here you can implement the actual form submission logic
+  };
+
+  return <ModalContent config={config} onSubmit={handleSubmit} />;
+}
+
+
+
+### app/embed/[id]/page.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { ModalConfig } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
+import { ClientForm } from "@/components/signup/client-form";
+
+export default function EmbedPage({ params }: { params: { id: string } }) {
+  const [config, setConfig] = useState<ModalConfig | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchConfig() {
+      const { data, error } = await supabase
+        .from("modal_configs")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+
+      if (error || !data) {
+        setError("Failed to load modal configuration");
+        return;
+      }
+
+      setConfig(data.config as ModalConfig);
+    }
+
+    fetchConfig();
+  }, [params.id]);
+
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
+  }
+
+  if (!config) {
+    return <div className="p-4">Loading...</div>;
+  }
+
+  return (
+    <div className="w-full min-h-screen overflow-auto">
+      <ClientForm config={config} />
+    </div>
+  );
+}
+
+
+
 ### app/layout.tsx
 
-import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'OpenPipe - Train Faster, Cheaper Models',
-  description: 'OpenPipe helps you fine-tune and deploy models that are faster and cheaper than GPT-4, trained on your production data.',
-}
+  title: "OpenPipe - Train Faster, Cheaper Models",
+  description:
+    "OpenPipe helps you fine-tune and deploy models that are faster and cheaper than GPT-4, trained on your production data.",
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <Toaster />
         {children}
       </body>
     </html>
-  )
+  );
 }
+
+
+
+### app/api/modal-config/route.ts
+
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
+
+export async function POST(request: Request) {
+  try {
+    const { config, publish = false } = await request.json();
+
+    const { data, error } = await supabase
+      .from("modal_configs")
+      .insert([
+        {
+          config,
+          published: publish,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const embedUrl = `${process.env.NEXT_PUBLIC_APP_URL}/embed/${data.id}`;
+
+    return NextResponse.json({ success: true, data: { ...data, embedUrl } });
+  } catch (error) {
+    console.error("Error saving modal config:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to save modal config" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json(
+      { success: false, error: "Missing config ID" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("modal_configs")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Error fetching modal config:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch modal config" },
+      { status: 500 }
+    );
+  }
+}
+
 
 
 ### app/page.tsx
@@ -559,6 +696,186 @@ export function TrustedLogos({ logos, onChange }: TrustedLogosProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+
+
+### components/builder/style-config.tsx
+
+"use client";
+
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { type ModalConfig } from "@/lib/types";
+
+interface StyleConfigProps {
+  config: ModalConfig;
+  onChange: (config: ModalConfig) => void;
+}
+
+const fontOptions = [
+  { value: "inter", label: "Inter" },
+  { value: "helvetica", label: "Helvetica" },
+  { value: "arial", label: "Arial" },
+  { value: "roboto", label: "Roboto" },
+  { value: "system", label: "System Default" },
+];
+
+export function StyleConfig({ config, onChange }: StyleConfigProps) {
+  const updateStyle = (updates: Partial<NonNullable<ModalConfig["style"]>>) => {
+    onChange({
+      ...config,
+      style: {
+        ...config.style,
+        ...updates,
+      },
+    });
+  };
+
+  return (
+    <Card className="p-4 space-y-4">
+      <h3 className="font-medium">Global Styles</h3>
+
+      <div className="space-y-2">
+        <Label>Font Family</Label>
+        <Select
+          value={config.style?.fontFamily || "system"}
+          onValueChange={(value) => updateStyle({ fontFamily: value })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {fontOptions.map((font) => (
+              <SelectItem key={font.value} value={font.value}>
+                {font.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Primary Color</Label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={config.style?.primaryColor || "#f97316"}
+            onChange={(e) => updateStyle({ primaryColor: e.target.value })}
+            placeholder="#f97316"
+            className="flex-1"
+          />
+          <Input
+            type="color"
+            value={config.style?.primaryColor || "#f97316"}
+            onChange={(e) => updateStyle({ primaryColor: e.target.value })}
+            className="w-12 p-1 h-9"
+          />
+        </div>
+        <p className="text-sm text-gray-500">
+          Used for buttons, progress bars, and accents
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Secondary Color</Label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={config.style?.secondaryColor || "#000000"}
+            onChange={(e) => updateStyle({ secondaryColor: e.target.value })}
+            placeholder="#000000"
+            className="flex-1"
+          />
+          <Input
+            type="color"
+            value={config.style?.secondaryColor || "#000000"}
+            onChange={(e) => updateStyle({ secondaryColor: e.target.value })}
+            className="w-12 p-1 h-9"
+          />
+        </div>
+        <p className="text-sm text-gray-500">
+          Used for secondary buttons and elements
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Text Color</Label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={config.style?.textColor || "#000000"}
+            onChange={(e) => updateStyle({ textColor: e.target.value })}
+            placeholder="#000000"
+            className="flex-1"
+          />
+          <Input
+            type="color"
+            value={config.style?.textColor || "#000000"}
+            onChange={(e) => updateStyle({ textColor: e.target.value })}
+            className="w-12 p-1 h-9"
+          />
+        </div>
+        <p className="text-sm text-gray-500">Used for main text content</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Left Panel Color</Label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={config.style?.leftPanelColor || "#f97316"}
+            onChange={(e) => updateStyle({ leftPanelColor: e.target.value })}
+            placeholder="#f97316"
+            className="flex-1"
+          />
+          <Input
+            type="color"
+            value={config.style?.leftPanelColor || "#f97316"}
+            onChange={(e) => updateStyle({ leftPanelColor: e.target.value })}
+            className="w-12 p-1 h-9"
+          />
+        </div>
+        <p className="text-sm text-gray-500">
+          Background color for the left panel
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Right Panel Color</Label>
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            value={config.style?.rightPanelMainColor || "#FFFFFF"}
+            onChange={(e) =>
+              updateStyle({ rightPanelMainColor: e.target.value })
+            }
+            placeholder="#FFFFFF"
+            className="flex-1"
+          />
+          <Input
+            type="color"
+            value={config.style?.rightPanelMainColor || "#FFFFFF"}
+            onChange={(e) =>
+              updateStyle({ rightPanelMainColor: e.target.value })
+            }
+            className="w-12 p-1 h-9"
+          />
+        </div>
+        <p className="text-sm text-gray-500">
+          Background color for the right panel
+        </p>
+      </div>
+    </Card>
   );
 }
 
@@ -1149,6 +1466,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { type ModalConfig } from "@/lib/types";
 import { fileToBase64, isBase64Image } from "@/lib/utils";
+import Image from "next/image";
 
 interface BrandingConfigProps {
   config: ModalConfig;
@@ -1158,117 +1476,80 @@ interface BrandingConfigProps {
 export function BrandingConfig({ config, onChange }: BrandingConfigProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleLogoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      try {
-        const base64 = await fileToBase64(file);
-        onChange({
-          ...config,
-          branding: {
-            ...config.branding,
-            logo: base64,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to convert image to base64:", error);
-      }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const base64 = await fileToBase64(file);
+      onChange({
+        ...config,
+        branding: {
+          ...config.branding,
+          logo: base64,
+        },
+      });
+    } catch (error) {
+      console.error("Error converting file to base64:", error);
     }
   };
 
-  const handleCompanyNameChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    onChange({
-      ...config,
-      branding: {
-        ...config.branding,
-        companyName: event.target.value,
-      },
-    });
-  };
-
-  const handleLogoBase64Change = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    onChange({
-      ...config,
-      branding: {
-        ...config.branding,
-        logo: event.target.value,
-      },
-    });
-  };
-
   return (
-    <Card className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Branding</h2>
-      <div className="space-y-4">
-        <div>
-          <Label>Company Name</Label>
-          <Input
-            value={config.branding?.companyName || ""}
-            onChange={handleCompanyNameChange}
-            placeholder="Enter company name"
-          />
-        </div>
-        <div>
-          <Label>Logo</Label>
-          <div className="mt-2 space-y-4">
-            {config.branding?.logo && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <img
-                    src={config.branding.logo}
-                    alt={config.branding.companyName || "Company Logo"}
-                    className="h-8 w-auto object-contain"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() =>
-                      onChange({
-                        ...config,
-                        branding: {
-                          ...config.branding,
-                          logo: undefined,
-                        },
-                      })
-                    }
-                  >
-                    Remove Logo
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Label>Base64 Data</Label>
-                  <Input
-                    value={config.branding.logo}
-                    onChange={handleLogoBase64Change}
-                    className="font-mono text-xs"
-                  />
-                </div>
+    <Card className="p-4 space-y-4">
+      <h3 className="font-medium">Branding</h3>
+
+      <div className="space-y-2">
+        <Label>Company Name</Label>
+        <Input
+          value={config.branding?.companyName || ""}
+          onChange={(e) =>
+            onChange({
+              ...config,
+              branding: {
+                ...config.branding,
+                companyName: e.target.value,
+              },
+            })
+          }
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Logo</Label>
+        <div className="flex items-center gap-4">
+          <div className="w-32 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+            {config.branding?.logo && isBase64Image(config.branding.logo) ? (
+              <div className="relative w-full h-full">
+                <Image
+                  src={config.branding.logo}
+                  alt={config.branding?.companyName || "Company Logo"}
+                  fill
+                  className="object-contain"
+                  unoptimized // Since we're using base64
+                />
               </div>
+            ) : (
+              <span className="text-sm text-gray-400">No logo</span>
             )}
-            <div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleLogoUpload}
-                accept="image/*"
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {config.branding?.logo ? "Change Logo" : "Upload Logo"}
-              </Button>
-            </div>
           </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            type="button"
+          >
+            Upload Logo
+          </Button>
         </div>
+        <p className="text-sm text-gray-500">
+          Recommended size: 200x50px. Max file size: 1MB
+        </p>
       </div>
     </Card>
   );
@@ -1278,21 +1559,31 @@ export function BrandingConfig({ config, onChange }: BrandingConfigProps) {
 
 ### components/builder/right-panel-builder.tsx
 
-"use client"
+"use client";
 
-import { Card } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
-import { Plus, Trash2 } from "lucide-react"
-import { type StepConfig, type FormField } from "@/lib/types"
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  type StepConfig,
+  type FormField,
+  type FormFieldType,
+} from "@/lib/types";
 
 interface RightPanelBuilderProps {
-  step: StepConfig
-  onChange: (updates: Partial<StepConfig>) => void
+  step: StepConfig;
+  onChange: (updates: Partial<StepConfig>) => void;
 }
 
 export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
@@ -1305,23 +1596,23 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
           label: "",
           type: "text",
           required: false,
-          fullWidth: true
-        }
-      ]
-    })
-  }
+          fullWidth: true,
+        },
+      ],
+    });
+  };
 
   const updateField = (index: number, updates: Partial<FormField>) => {
-    const newFields = [...step.fields]
-    newFields[index] = { ...newFields[index], ...updates }
-    onChange({ fields: newFields })
-  }
+    const newFields = [...step.fields];
+    newFields[index] = { ...newFields[index], ...updates };
+    onChange({ fields: newFields });
+  };
 
   const removeField = (index: number) => {
-    const newFields = [...step.fields]
-    newFields.splice(index, 1)
-    onChange({ fields: newFields })
-  }
+    const newFields = [...step.fields];
+    newFields.splice(index, 1);
+    onChange({ fields: newFields });
+  };
 
   return (
     <div className="space-y-6">
@@ -1344,11 +1635,7 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <Label>Form Fields</Label>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={addField}
-          >
+          <Button variant="outline" size="sm" onClick={addField}>
             <Plus className="w-4 h-4 mr-2" />
             Add Field
           </Button>
@@ -1363,14 +1650,18 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                     <Label>Label</Label>
                     <Input
                       value={field.label}
-                      onChange={(e) => updateField(index, { label: e.target.value })}
+                      onChange={(e) =>
+                        updateField(index, { label: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2 w-[200px]">
                     <Label>Type</Label>
                     <Select
                       value={field.type}
-                      onValueChange={(value) => updateField(index, { type: value })}
+                      onValueChange={(value) =>
+                        updateField(index, { type: value as FormFieldType })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -1379,7 +1670,9 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                         <SelectItem value="text">Text</SelectItem>
                         <SelectItem value="email">Email</SelectItem>
                         <SelectItem value="select">Select</SelectItem>
-                        <SelectItem value="multi-select">Multi Select</SelectItem>
+                        <SelectItem value="multi-select">
+                          Multi Select
+                        </SelectItem>
                         <SelectItem value="textarea">Textarea</SelectItem>
                       </SelectContent>
                     </Select>
@@ -1399,9 +1692,11 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                     <Label>Options (one per line)</Label>
                     <Textarea
                       value={field.options?.join("\n")}
-                      onChange={(e) => updateField(index, {
-                        options: e.target.value.split("\n").filter(Boolean)
-                      })}
+                      onChange={(e) =>
+                        updateField(index, {
+                          options: e.target.value.split("\n").filter(Boolean),
+                        })
+                      }
                       rows={4}
                     />
                   </div>
@@ -1411,14 +1706,18 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={field.required}
-                      onCheckedChange={(checked) => updateField(index, { required: checked })}
+                      onCheckedChange={(checked) =>
+                        updateField(index, { required: checked })
+                      }
                     />
                     <Label>Required</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={field.fullWidth}
-                      onCheckedChange={(checked) => updateField(index, { fullWidth: checked })}
+                      onCheckedChange={(checked) =>
+                        updateField(index, { fullWidth: checked })
+                      }
                     />
                     <Label>Full Width</Label>
                   </div>
@@ -1429,83 +1728,106 @@ export function RightPanelBuilder({ step, onChange }: RightPanelBuilderProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
+
 
 
 ### components/builder/steps-builder.tsx
 
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2 } from "lucide-react"
-import { StepConfig, FormField, PanelType } from "@/lib/types"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  type StepConfig,
+  type FormField,
+  type FormFieldType,
+  type PanelType,
+} from "@/lib/types";
 
 interface StepsBuilderProps {
-  steps: StepConfig[]
-  onChange: (steps: StepConfig[]) => void
+  steps: StepConfig[];
+  onChange: (steps: StepConfig[]) => void;
 }
 
 export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
-  const [activeStep, setActiveStep] = useState(0)
+  const [activeStep, setActiveStep] = useState(0);
 
   const updateStep = (index: number, updates: Partial<StepConfig>) => {
-    const newSteps = [...steps]
-    newSteps[index] = { ...newSteps[index], ...updates }
-    onChange(newSteps)
-  }
+    const newSteps = [...steps];
+    newSteps[index] = { ...newSteps[index], ...updates };
+    onChange(newSteps);
+  };
 
-  const updatePanelContent = (index: number, panelType: PanelType, updates: any) => {
-    const newSteps = [...steps]
-    newSteps[index] = { 
-      ...newSteps[index], 
+  const updatePanelContent = (
+    index: number,
+    panelType: PanelType,
+    updates: any
+  ) => {
+    const newSteps = [...steps];
+    newSteps[index] = {
+      ...newSteps[index],
       panelType,
       panelContent: {
         ...newSteps[index].panelContent,
-        ...updates
-      }
-    }
-    onChange(newSteps)
-  }
+        ...updates,
+      },
+    };
+    onChange(newSteps);
+  };
 
   const addField = (stepIndex: number) => {
-    const newSteps = [...steps]
+    const newSteps = [...steps];
     newSteps[stepIndex].fields.push({
       id: crypto.randomUUID(),
       label: "",
       type: "text",
       required: false,
       fullWidth: true,
-    })
-    onChange(newSteps)
-  }
+    });
+    onChange(newSteps);
+  };
 
-  const updateField = (stepIndex: number, fieldIndex: number, updates: Partial<FormField>) => {
-    const newSteps = [...steps]
+  const updateField = (
+    stepIndex: number,
+    fieldIndex: number,
+    updates: Partial<FormField>
+  ) => {
+    const newSteps = [...steps];
     newSteps[stepIndex].fields[fieldIndex] = {
       ...newSteps[stepIndex].fields[fieldIndex],
       ...updates,
-    }
-    onChange(newSteps)
-  }
+    };
+    onChange(newSteps);
+  };
 
   const removeField = (stepIndex: number, fieldIndex: number) => {
-    const newSteps = [...steps]
-    newSteps[stepIndex].fields.splice(fieldIndex, 1)
-    onChange(newSteps)
-  }
+    const newSteps = [...steps];
+    newSteps[stepIndex].fields.splice(fieldIndex, 1);
+    onChange(newSteps);
+  };
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeStep.toString()} onValueChange={(v) => setActiveStep(parseInt(v))}>
+      <Tabs
+        value={activeStep.toString()}
+        onValueChange={(v) => setActiveStep(parseInt(v))}
+      >
         <TabsList className="grid grid-cols-4">
           {steps.map((_, index) => (
             <TabsTrigger key={index} value={index.toString()}>
@@ -1515,13 +1837,19 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
         </TabsList>
 
         {steps.map((step, stepIndex) => (
-          <TabsContent key={stepIndex} value={stepIndex.toString()} className="space-y-6">
+          <TabsContent
+            key={stepIndex}
+            value={stepIndex.toString()}
+            className="space-y-6"
+          >
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Panel Type</Label>
                 <Select
                   value={step.panelType}
-                  onValueChange={(value: PanelType) => updateStep(stepIndex, { panelType: value })}
+                  onValueChange={(value: PanelType) =>
+                    updateStep(stepIndex, { panelType: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1540,7 +1868,11 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                     <Label>Panel Headline</Label>
                     <Input
                       value={(step.panelContent as any).headline}
-                      onChange={(e) => updatePanelContent(stepIndex, "main", { headline: e.target.value })}
+                      onChange={(e) =>
+                        updatePanelContent(stepIndex, "main", {
+                          headline: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   {/* Add value props editor here */}
@@ -1553,7 +1885,11 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                     <Label>Panel Headline</Label>
                     <Input
                       value={(step.panelContent as any).headline}
-                      onChange={(e) => updatePanelContent(stepIndex, "value-props", { headline: e.target.value })}
+                      onChange={(e) =>
+                        updatePanelContent(stepIndex, "value-props", {
+                          headline: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   {/* Add stats editor here */}
@@ -1566,38 +1902,50 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                     <Label>Panel Headline</Label>
                     <Input
                       value={(step.panelContent as any).headline}
-                      onChange={(e) => updatePanelContent(stepIndex, "testimonial", { headline: e.target.value })}
+                      onChange={(e) =>
+                        updatePanelContent(stepIndex, "testimonial", {
+                          headline: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Quote</Label>
                     <Textarea
                       value={(step.panelContent as any).quote}
-                      onChange={(e) => updatePanelContent(stepIndex, "testimonial", { quote: e.target.value })}
+                      onChange={(e) =>
+                        updatePanelContent(stepIndex, "testimonial", {
+                          quote: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Author Name</Label>
                     <Input
                       value={(step.panelContent as any).author?.name}
-                      onChange={(e) => updatePanelContent(stepIndex, "testimonial", { 
-                        author: {
-                          ...(step.panelContent as any).author,
-                          name: e.target.value
-                        }
-                      })}
+                      onChange={(e) =>
+                        updatePanelContent(stepIndex, "testimonial", {
+                          author: {
+                            ...(step.panelContent as any).author,
+                            name: e.target.value,
+                          },
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Author Title</Label>
                     <Input
                       value={(step.panelContent as any).author?.title}
-                      onChange={(e) => updatePanelContent(stepIndex, "testimonial", { 
-                        author: {
-                          ...(step.panelContent as any).author,
-                          title: e.target.value
-                        }
-                      })}
+                      onChange={(e) =>
+                        updatePanelContent(stepIndex, "testimonial", {
+                          author: {
+                            ...(step.panelContent as any).author,
+                            title: e.target.value,
+                          },
+                        })
+                      }
                     />
                   </div>
                 </Card>
@@ -1607,7 +1955,9 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                 <Label>Form Headline</Label>
                 <Input
                   value={step.headline}
-                  onChange={(e) => updateStep(stepIndex, { headline: e.target.value })}
+                  onChange={(e) =>
+                    updateStep(stepIndex, { headline: e.target.value })
+                  }
                 />
               </div>
 
@@ -1615,7 +1965,9 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                 <Label>Form Subheadline</Label>
                 <Input
                   value={step.subheadline}
-                  onChange={(e) => updateStep(stepIndex, { subheadline: e.target.value })}
+                  onChange={(e) =>
+                    updateStep(stepIndex, { subheadline: e.target.value })
+                  }
                 />
               </div>
 
@@ -1641,14 +1993,22 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                             <Label>Label</Label>
                             <Input
                               value={field.label}
-                              onChange={(e) => updateField(stepIndex, fieldIndex, { label: e.target.value })}
+                              onChange={(e) =>
+                                updateField(stepIndex, fieldIndex, {
+                                  label: e.target.value,
+                                })
+                              }
                             />
                           </div>
                           <div className="space-y-2 w-[200px]">
                             <Label>Type</Label>
                             <Select
                               value={field.type}
-                              onValueChange={(value) => updateField(stepIndex, fieldIndex, { type: value })}
+                              onValueChange={(value) =>
+                                updateField(stepIndex, fieldIndex, {
+                                  type: value as FormFieldType,
+                                })
+                              }
                             >
                               <SelectTrigger>
                                 <SelectValue />
@@ -1657,8 +2017,12 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                                 <SelectItem value="text">Text</SelectItem>
                                 <SelectItem value="email">Email</SelectItem>
                                 <SelectItem value="select">Select</SelectItem>
-                                <SelectItem value="multi-select">Multi Select</SelectItem>
-                                <SelectItem value="textarea">Textarea</SelectItem>
+                                <SelectItem value="multi-select">
+                                  Multi Select
+                                </SelectItem>
+                                <SelectItem value="textarea">
+                                  Textarea
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1672,14 +2036,19 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                           </Button>
                         </div>
 
-                        {(field.type === "select" || field.type === "multi-select") && (
+                        {(field.type === "select" ||
+                          field.type === "multi-select") && (
                           <div className="space-y-2">
                             <Label>Options (one per line)</Label>
                             <Textarea
                               value={field.options?.join("\n")}
-                              onChange={(e) => updateField(stepIndex, fieldIndex, {
-                                options: e.target.value.split("\n").filter(Boolean)
-                              })}
+                              onChange={(e) =>
+                                updateField(stepIndex, fieldIndex, {
+                                  options: e.target.value
+                                    .split("\n")
+                                    .filter(Boolean),
+                                })
+                              }
                               rows={4}
                             />
                           </div>
@@ -1689,14 +2058,22 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={field.required}
-                              onCheckedChange={(checked) => updateField(stepIndex, fieldIndex, { required: checked })}
+                              onCheckedChange={(checked) =>
+                                updateField(stepIndex, fieldIndex, {
+                                  required: checked,
+                                })
+                              }
                             />
                             <Label>Required</Label>
                           </div>
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={field.fullWidth}
-                              onCheckedChange={(checked) => updateField(stepIndex, fieldIndex, { fullWidth: checked })}
+                              onCheckedChange={(checked) =>
+                                updateField(stepIndex, fieldIndex, {
+                                  fullWidth: checked,
+                                })
+                              }
                             />
                             <Label>Full Width</Label>
                           </div>
@@ -1711,8 +2088,9 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
         ))}
       </Tabs>
     </div>
-  )
+  );
 }
+
 
 
 ### components/builder/modal-builder.tsx
@@ -1722,10 +2100,13 @@ export function StepsBuilder({ steps, onChange }: StepsBuilderProps) {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Share2 } from "lucide-react";
 import { StepBuilder } from "./step-builder";
 import { BrandingConfig } from "./branding-config";
+import { StyleConfig } from "./style-config";
 import { type ModalConfig, type StepConfig, type Step } from "@/lib/types";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ModalBuilderProps {
   config: ModalConfig;
@@ -1752,6 +2133,9 @@ export function ModalBuilder({
   currentStep,
   onStepChange,
 }: ModalBuilderProps) {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+
   const addStep = () => {
     onChange({
       ...config,
@@ -1774,9 +2158,71 @@ export function ModalBuilder({
     onChange({ ...config, steps: newSteps });
   };
 
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    try {
+      const response = await fetch("/api/modal-config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          config,
+          publish: true,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error);
+
+      setEmbedUrl(data.data.embedUrl);
+      toast.success("Successfully published modal!");
+    } catch (error) {
+      console.error("Error publishing modal:", error);
+      toast.error("Failed to publish modal. Please try again.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const copyEmbedCode = () => {
+    if (!embedUrl) return;
+    const embedCode = `<iframe src="${embedUrl}" width="100%" height="100%" frameborder="0"></iframe>`;
+    navigator.clipboard.writeText(embedCode);
+    toast.success("Embed code copied to clipboard!");
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Modal Builder</h2>
+        <div className="flex items-center gap-2">
+          {embedUrl && (
+            <Button variant="outline" onClick={copyEmbedCode}>
+              Copy Embed Code
+            </Button>
+          )}
+          <Button onClick={handlePublish} disabled={isPublishing}>
+            <Share2 className="w-4 h-4 mr-2" />
+            {isPublishing ? "Publishing..." : "Publish"}
+          </Button>
+        </div>
+      </div>
+
+      {embedUrl && (
+        <Card className="p-4 bg-gray-50">
+          <p className="text-sm text-gray-600 mb-2">
+            Your modal is published! Use this URL to embed it:
+          </p>
+          <code className="text-sm bg-white p-2 rounded border block overflow-x-auto">
+            {embedUrl}
+          </code>
+        </Card>
+      )}
+
       <BrandingConfig config={config} onChange={onChange} />
+
+      <StyleConfig config={config} onChange={onChange} />
 
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Steps</h2>
@@ -1893,8 +2339,6 @@ export function TrustedTicker({
   showFadeOverlays = false,
   backgroundColor = "#f97316",
 }: TrustedTickerProps) {
-  if (logos.length === 0) return null;
-
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
 
@@ -1918,6 +2362,8 @@ export function TrustedTicker({
 
     startAnimation();
   }, [controls, logos]);
+
+  if (logos.length === 0) return null;
 
   return (
     <div className="relative h-12 overflow-hidden">
@@ -2032,9 +2478,8 @@ export function LeftPanelContent({
   step,
   backgroundColor = "#f97316",
 }: LeftPanelContentProps) {
-  const content = step.panelContent as any;
-
-  const logoDisplayMode = content.logoDisplayMode || "ticker"; // default to ticker if not set
+  const content = step.panelContent || {};
+  const logoDisplayMode = content?.logoDisplayMode || "ticker";
 
   if (step.panelType === "main") {
     return (
@@ -2434,7 +2879,7 @@ export function ModalPreview({ config }: ModalPreviewProps) {
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2446,7 +2891,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ModalConfig, FormData } from "@/lib/types";
+import { ModalConfig, FormData, FormField } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
 import { LeftPanelContent } from "./left-panel-content";
 
@@ -2480,6 +2925,22 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   const currentStepIndex = step - 1;
   const currentStep = config.steps[currentStepIndex];
   const progress = (step / totalSteps) * 100;
+
+  // Compute effective step if inheritPreviousPanel is true
+  const effectiveStep = useMemo(() => {
+    if (currentStep?.inheritPreviousPanel && currentStepIndex > 0) {
+      const prevStep = config.steps[currentStepIndex - 1];
+      return {
+        ...prevStep,
+        ...currentStep,
+        fields: currentStep.fields,
+        inheritPreviousPanel: currentStep.inheritPreviousPanel,
+        panelBackgroundColor:
+          currentStep.panelBackgroundColor ?? prevStep.panelBackgroundColor,
+      };
+    }
+    return currentStep;
+  }, [config.steps, currentStep, currentStepIndex]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2524,89 +2985,99 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
     }),
   };
 
-  const renderFormFields = () => {
-    if (currentStepIndex === 0) {
-      return (
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="email">Work Email</Label>
+  const renderField = (field: FormField) => {
+    switch (field.type) {
+      case "text":
+      case "email":
+        return (
+          <div key={field.id} className={field.fullWidth ? "col-span-2" : ""}>
+            <Label htmlFor={field.id}>{field.label}</Label>
             <Input
-              id="email"
-              type="email"
-              value={formData.email || ""}
+              id={field.id}
+              type={field.type}
+              value={formData[field.id] || ""}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, [field.id]: e.target.value })
               }
-              placeholder="you@company.com"
-              required
+              required={field.required}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                type="text"
-                value={formData.firstName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                type="text"
-                value={formData.lastName || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-                required
-              />
-            </div>
+        );
+      case "select":
+        return (
+          <div key={field.id} className={field.fullWidth ? "col-span-2" : ""}>
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Select
+              value={formData[field.id] || ""}
+              onValueChange={(value) =>
+                setFormData({ ...formData, [field.id]: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={`Select ${field.label.toLowerCase()}`}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      );
-    } else if (currentStepIndex === 1) {
-      return (
-        <div>
-          <Label htmlFor="currentModels">Current Models</Label>
-          <Select
-            value={formData.currentModels || ""}
-            onValueChange={(value) =>
-              setFormData({ ...formData, currentModels: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select the models you use" />
-            </SelectTrigger>
-            <SelectContent>
-              {currentStep.fields[0].options?.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
+        );
+      case "textarea":
+        return (
+          <div key={field.id} className={field.fullWidth ? "col-span-2" : ""}>
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <textarea
+              id={field.id}
+              value={formData[field.id] || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, [field.id]: e.target.value })
+              }
+              required={field.required}
+              className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
+  const renderFormFields = () => {
+    if (!effectiveStep?.fields?.length) return null;
+
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {effectiveStep.fields.map((field) => renderField(field))}
+      </div>
+    );
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 min-h-screen"
+      style={{
+        fontFamily: config.style?.fontFamily || "system-ui",
+        color: config.style?.textColor || "#000000",
+      }}
+    >
       {/* Left Panel */}
       {!isMobile && (
         <div
           className="relative"
           style={{
             background:
-              typeof config.style?.leftPanelColor === "string" &&
-              config.style.leftPanelColor.includes("gradient")
-                ? config.style.leftPanelColor
-                : config.style?.leftPanelColor,
+              typeof effectiveStep?.panelBackgroundColor === "string" &&
+              effectiveStep.panelBackgroundColor.includes("gradient")
+                ? effectiveStep.panelBackgroundColor
+                : effectiveStep?.panelBackgroundColor ||
+                  config.style?.leftPanelColor ||
+                  "#f97316",
           }}
         >
           <div className="relative w-full h-full p-6 sm:p-12 overflow-y-auto">
@@ -2620,10 +3091,13 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 exit="exit"
                 className="w-full h-full"
               >
-                {currentStep && (
+                {effectiveStep && (
                   <LeftPanelContent
-                    step={currentStep}
-                    backgroundColor={config.style?.leftPanelColor}
+                    step={effectiveStep}
+                    backgroundColor={
+                      effectiveStep.panelBackgroundColor ||
+                      config.style?.leftPanelColor
+                    }
                   />
                 )}
               </motion.div>
@@ -2635,7 +3109,9 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
       {/* Right Panel */}
       <div
         className="relative min-h-screen"
-        style={{ backgroundColor: config.style?.rightPanelMainColor }}
+        style={{
+          backgroundColor: config.style?.rightPanelMainColor || "#FFFFFF",
+        }}
       >
         <div className="h-full flex flex-col">
           {/* Header Section */}
@@ -2652,8 +3128,11 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 )}
                 <div className="h-2 flex-1 bg-gray-100 rounded-full">
                   <div
-                    className="h-full bg-orange-500 rounded-full transition-all duration-300 ease-in-out"
-                    style={{ width: `${progress}%` }}
+                    className="h-full rounded-full transition-all duration-300 ease-in-out"
+                    style={{
+                      width: `${progress}%`,
+                      backgroundColor: config.style?.primaryColor || "#f97316",
+                    }}
                   />
                 </div>
               </div>
@@ -2667,7 +3146,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                       className="h-8 w-auto object-contain"
                     />
                   ) : (
-                    <span className="text-xl font-semibold text-gray-900">
+                    <span className="text-xl font-semibold">
                       {config.branding?.companyName || "OpenPipe"}
                     </span>
                   )}
@@ -2696,10 +3175,10 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                   <div className="flex-1 space-y-6">
                     <div>
                       <h2 className="text-2xl font-semibold">
-                        {currentStep.headline}
+                        {effectiveStep.headline}
                       </h2>
                       <p className="text-gray-600 mt-2">
-                        {currentStep.subheadline}
+                        {effectiveStep.subheadline}
                       </p>
                     </div>
                     <div className="pt-2">{renderFormFields()}</div>
@@ -2708,7 +3187,11 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                   <div className="flex justify-end pt-6 mt-auto">
                     <Button
                       type="submit"
-                      className="rounded-full px-8 py-4 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
+                      className="rounded-full px-8 py-4 text-lg text-white hover:opacity-80 transition-opacity duration-200"
+                      style={{
+                        backgroundColor:
+                          config.style?.primaryColor || "#f97316",
+                      }}
                     >
                       {step === totalSteps ? "Submit" : "Continue"}
                     </Button>
@@ -2721,6 +3204,24 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
       </div>
     </div>
   );
+}
+
+
+
+### components/signup/client-form.tsx
+
+"use client";
+
+import { FormData, ModalConfig } from "@/lib/types";
+import { ModalContent } from "./modal-content";
+
+export function ClientForm({ config }: { config: ModalConfig }) {
+  const handleSubmit = async (formData: FormData) => {
+    console.log("Form submitted:", formData);
+    // Here you can implement the actual form submission logic
+  };
+
+  return <ModalContent config={config} onSubmit={handleSubmit} />;
 }
 
 
@@ -3006,6 +3507,226 @@ export function TrustedExample() {
     </div>
   );
 }
+
+
+
+
+## Lib Directory
+
+### lib/utils.ts
+
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Failed to convert file to base64"));
+      }
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function isBase64Image(str: string) {
+  return str.startsWith("data:image/");
+}
+
+
+
+### lib/types.ts
+
+export type FormFieldType =
+  | "text"
+  | "email"
+  | "select"
+  | "multi-select"
+  | "textarea";
+// lib/types.ts
+export type TrustedLogo = {
+  id: string;
+  url: string;
+  alt: string;
+};
+
+export type PanelType =
+  | "main"
+  | "value-props"
+  | "testimonial"
+  | "features"
+  | "success";
+
+export interface FormField {
+  id: string;
+  label: string;
+  type: FormFieldType;
+  required: boolean;
+  fullWidth: boolean;
+  options?: string[];
+}
+
+export interface Author {
+  name: string;
+  title: string;
+  avatar?: string;
+}
+
+export interface PanelContentMain {
+  headline: string;
+  valueProps: { icon: string; text: string }[];
+  trustedByLogos: TrustedLogo[];
+}
+
+export interface PanelContentValueProps {
+  headline: string;
+  stats: { value: string; label: string; icon?: string }[];
+}
+
+export interface PanelContentTestimonial {
+  headline: string;
+  quote: string;
+  author: Author;
+}
+
+export interface PanelContentFeatures {
+  headline: string;
+  features: { title: string; description: string; icon: string }[];
+}
+
+export interface PanelContentSuccess {
+  headline: string;
+  subheadline: string;
+  features: { title: string; icon: string }[];
+}
+
+export type PanelContent =
+  | PanelContentMain
+  | PanelContentValueProps
+  | PanelContentTestimonial
+  | PanelContentFeatures
+  | PanelContentSuccess
+  | Record<string, any>;
+
+export interface StepConfig {
+  headline: string;
+  subheadline?: string;
+  panelType: PanelType;
+  panelContent?: any;
+  fields: FormField[];
+  inheritPreviousPanel?: boolean;
+  panelBackgroundColor?: string;
+  // Add display mode for logos
+  // If omitted, default to ticker or static as you prefer
+  // We'll store it in panelContent for simplicity:
+  // panelContent: { ..., logoDisplayMode?: "ticker" | "static" }
+}
+
+export interface ModalConfig {
+  headline: string;
+  valueProps: { icon: string; text: string }[];
+  logo: string;
+  trustedByLogos: TrustedLogo[];
+  steps: StepConfig[];
+  style?: {
+    leftPanelPadding?: string;
+    leftPanelColor?: string;
+    rightPanelMainColor?: string;
+    // Global styles
+    fontFamily?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    textColor?: string;
+  };
+  branding?: {
+    logo?: string;
+    companyName?: string;
+  };
+}
+
+export type FormData = Record<string, string>;
+export type Step = number;
+
+
+
+### lib/supabase.ts
+
+import { createClient } from "@supabase/supabase-js";
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_URL");
+}
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY");
+}
+
+export const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+export type Database = {
+  public: {
+    Tables: {
+      modal_configs: {
+        Row: {
+          id: string;
+          created_at: string;
+          config: any;
+          published: boolean;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          config: any;
+          published?: boolean;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          config?: any;
+          published?: boolean;
+        };
+      };
+    };
+  };
+};
+
+
+
+### lib/placeholder-logos.ts
+
+import { TrustedLogo } from "./types";
+
+// Base64 encoded transparent 1x1 pixel PNG
+const transparentPixel =
+  "data:image/avif;base64,AAAAHGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZgAAAZhtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgACAAAAAAG8AAEAAAAAAAAAHAABAAAAAAHYAAEAAAAAAAACCwAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAA12lwcnAAAACxaXBjbwAAABNjb2xybmNseAABAA0ABoAAAAAMYXYxQ4EAHAAAAAAUaXNwZQAAAAAAAAIAAAAAqwAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAMYXYxQ4EgAgAAAAAUaXNwZQAAAAAAAAIAAAAAqwAAABBwaXhpAAAAAAMICAgAAAAeaXBtYQAAAAAAAAACAAEEAYYHCAACBIIDBIUAAAAaaXJlZgAAAAAAAAAOYXV4bAACAAEAAQAAAi9tZGF0EgAKBhgh//VMKjIQENAAAEABSBkszhFh/reTUBIACgk4If/1TCAhoNIy+wMQ0AGGFIFAACcnGo2Od9cUTxSM4gmv2Xt4hMK1Nsc9xtzr725oEymoe+XRqSx8GuDl8SG+3Rlrm1AVfRzIWZGcU6q+swM891K4NBA23u2iCmBY4izWam5dI9YXFGJ/S3z3lTCpZss5cz3Ce6rE3V9C+4oOYf/lp5019RKyo9CF0eUSR5+743YtZbrWY0Qh1H95orqCcHrvImaGq8pgkUVQgzTH8eTQxALSVdNhAOQlAQl1Hek/utG1E6Zpbcv4/nmoRko4R1t9n7FHO0AWbBsR2iSM1nw8NcIksF/TJ41KoXh5E1OAjTfX6XsuoUYSQdm0NhsXblCApJdVvJhq7gnlegPE87dnSERuYlNFGCltEzCo1VI3IGTuw67eB2WGoKbMgsKYbDuPJ6IzpXvWgnZRPZy/iJ5wuUR/DqtrhL0adIMmhHNUNpI1ZoXcThkHYFfKxd9n+o69zSSlv+kMZiveZdEwEvC0A6YuqJwZM8VIlCmad/LIWSG0dOMyBP2IlqTP/qRQK96gpY299zJ2C2h1+5mkVrCQQ6fRHrl53WCxYfNY81S5bthBEhvLIwHJ8P9nYMOc1FKhOFX7IAfRYk7AuWanyOpcND2HHjURP5qb5y/7YtXP53IGqxVY8GDjti7ApbbZ9bsKhCpUz0Bf7rc3Fx5+Jgx/Ph7CTXA=";
+
+export const placeholderLogos: TrustedLogo[] = [
+  {
+    id: "placeholder-1",
+    url: transparentPixel,
+    alt: "Trusted Company 1",
+  },
+  {
+    id: "placeholder-2",
+    url: transparentPixel,
+    alt: "Trusted Company 2",
+  },
+  {
+    id: "placeholder-3",
+    url: transparentPixel,
+    alt: "Trusted Company 3",
+  },
+];
 
 
 
