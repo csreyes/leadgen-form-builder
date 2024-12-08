@@ -4,12 +4,14 @@ import { useState } from "react";
 import { SignupModal } from "@/components/signup/signup-modal";
 import { ModalBuilder } from "@/components/builder/modal-builder";
 import { ModalConfig, StepConfig, Step, TrustedLogo } from "@/lib/types";
+import { placeholderLogos } from "@/lib/placeholder-logos";
 
-// Example trusted logos as objects with url/alt:
-const sampleLogos: TrustedLogo[] = [
-  { id: "logo1", url: "/logo1.png", alt: "Company 1" },
-  { id: "logo2", url: "/logo2.png", alt: "Company 2" },
-];
+// Example trusted logos using base64 placeholders
+const sampleLogos = placeholderLogos;
+
+// Base64 placeholder for avatar
+const placeholderAvatar =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 const defaultPanelContent = {
   main: {
@@ -44,7 +46,7 @@ const defaultPanelContent = {
     author: {
       name: "John Doe",
       title: "CEO & Co-founder",
-      avatar: "",
+      avatar: placeholderAvatar,
     },
   },
   features: {

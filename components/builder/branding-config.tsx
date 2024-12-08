@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { type ModalConfig } from "@/lib/types";
+import { fileToBase64, isBase64Image } from "@/lib/utils";
 
 interface BrandingConfigProps {
   config: ModalConfig;
@@ -15,20 +16,23 @@ interface BrandingConfigProps {
 export function BrandingConfig({ config, onChange }: BrandingConfigProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      try {
+        const base64 = await fileToBase64(file);
         onChange({
           ...config,
           branding: {
             ...config.branding,
-            logo: reader.result as string,
+            logo: base64,
           },
         });
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Failed to convert image to base64:", error);
+      }
     }
   };
 
@@ -40,6 +44,18 @@ export function BrandingConfig({ config, onChange }: BrandingConfigProps) {
       branding: {
         ...config.branding,
         companyName: event.target.value,
+      },
+    });
+  };
+
+  const handleLogoBase64Change = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    onChange({
+      ...config,
+      branding: {
+        ...config.branding,
+        logo: event.target.value,
       },
     });
   };
@@ -60,27 +76,37 @@ export function BrandingConfig({ config, onChange }: BrandingConfigProps) {
           <Label>Logo</Label>
           <div className="mt-2 space-y-4">
             {config.branding?.logo && (
-              <div className="flex items-center gap-4">
-                <img
-                  src={config.branding.logo}
-                  alt={config.branding.companyName || "Company Logo"}
-                  className="h-8 w-auto object-contain"
-                />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() =>
-                    onChange({
-                      ...config,
-                      branding: {
-                        ...config.branding,
-                        logo: undefined,
-                      },
-                    })
-                  }
-                >
-                  Remove Logo
-                </Button>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={config.branding.logo}
+                    alt={config.branding.companyName || "Company Logo"}
+                    className="h-8 w-auto object-contain"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() =>
+                      onChange({
+                        ...config,
+                        branding: {
+                          ...config.branding,
+                          logo: undefined,
+                        },
+                      })
+                    }
+                  >
+                    Remove Logo
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label>Base64 Data</Label>
+                  <Input
+                    value={config.branding.logo}
+                    onChange={handleLogoBase64Change}
+                    className="font-mono text-xs"
+                  />
+                </div>
               </div>
             )}
             <div>
