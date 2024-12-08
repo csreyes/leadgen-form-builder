@@ -19,8 +19,6 @@ export function TrustedTicker({
   showFadeOverlays = false,
   backgroundColor = "#f97316",
 }: TrustedTickerProps) {
-  if (logos.length === 0) return null;
-
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
 
@@ -44,6 +42,8 @@ export function TrustedTicker({
 
     startAnimation();
   }, [controls, logos]);
+
+  if (logos.length === 0) return null;
 
   return (
     <div className="relative h-12 overflow-hidden">
