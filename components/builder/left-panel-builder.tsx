@@ -401,8 +401,8 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                   </Label>
                 </div>
                 <p className="text-sm text-gray-500">
-                  When enabled, this step will reuse the previous step's panel
-                  content and style as a starting point.
+                  When enabled, this step will reuse the previous step&apos;s
+                  panel content and style as a starting point.
                 </p>
               </div>
 
@@ -440,8 +440,9 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                 <Card className="p-6 space-y-6 bg-white border">
                   <h4 className="text-base font-medium">Main Panel Content</h4>
                   <p className="text-sm text-gray-600">
-                    The "Main" panel typically contains a headline, core value
-                    props, and trusted logos. Keep it concise and impactful.
+                    The &quot;Main&quot; panel typically contains a headline,
+                    core value props, and trusted logos. Keep it concise and
+                    impactful.
                   </p>
 
                   <div className="space-y-4">
@@ -594,7 +595,7 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                   </h4>
                   <p className="text-sm text-gray-600">
                     Highlight key statistics or metrics that showcase your
-                    product's unique value.
+                    product&apos;s unique value.
                   </p>
 
                   <div className="space-y-2">
@@ -619,8 +620,8 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                           <TooltipContent>
                             <p>
                               Use concise metrics that quickly communicate your
-                              solution's benefits, like cost savings or time to
-                              value.
+                              solution&apos;s benefits, like cost savings or
+                              time to value.
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -858,8 +859,8 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                     </div>
                     {(step.panelContent as any).features?.length === 0 && (
                       <p className="text-sm text-gray-500 italic">
-                        No features yet. Add some to showcase your product's
-                        capabilities.
+                        No features yet. Add some to showcase your
+                        product&apos;s capabilities.
                       </p>
                     )}
                     {(step.panelContent as any).features?.map(
@@ -942,7 +943,8 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                   </h4>
                   <p className="text-sm text-gray-600">
                     This panel appears after submission. Reassure the user that
-                    their information is received and highlight what's next.
+                    their information is received and highlight what&apos;s
+                    next.
                   </p>
 
                   <div className="space-y-2">
@@ -1002,7 +1004,7 @@ export function LeftPanelBuilder({ step, onChange }: LeftPanelBuilderProps) {
                     {(step.panelContent as any).features?.length === 0 && (
                       <p className="text-sm text-gray-500 italic">
                         No features yet. Add some to let the user know what
-                        they've unlocked.
+                        they&apos;ve unlocked.
                       </p>
                     )}
                     {(step.panelContent as any).features?.map(
