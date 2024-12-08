@@ -1,4 +1,9 @@
-import { FormFieldType } from "./types";
+export type FormFieldType =
+  | "text"
+  | "email"
+  | "select"
+  | "multi-select"
+  | "textarea";
 // lib/types.ts
 export type TrustedLogo = {
   id: string;
@@ -12,15 +17,6 @@ export type PanelType =
   | "testimonial"
   | "features"
   | "success";
-
-export interface FormField {
-  id: string;
-  label: string;
-  type: "text" | "email" | "select" | "multi-select" | "textarea";
-  required: boolean;
-  fullWidth: boolean;
-  options?: string[];
-}
 
 export interface FormField {
   id: string;
