@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useAnimationControls } from "framer-motion";
 import Image from "next/image";
+import { useEffect, useRef } from "react";
 import { TrustedLogo } from "@/lib/types";
 
 interface TrustedTickerProps {
@@ -18,6 +19,30 @@ export function TrustedTicker({
 }: TrustedTickerProps) {
   if (logos.length === 0) return null;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controls = useAnimationControls();
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const startAnimation = async () => {
+      const containerWidth = containerRef.current?.scrollWidth || 0;
+      const singleSetWidth = containerWidth / 4; // Since we're showing 4 sets
+
+      await controls.start({
+        x: -singleSetWidth,
+        transition: {
+          duration: 10,
+          ease: "linear",
+          repeat: Infinity,
+          repeatType: "loop",
+        },
+      });
+    };
+
+    startAnimation();
+  }, [controls, logos]);
+
   return (
     <div className="relative h-12 overflow-hidden">
       {showFadeOverlays && (
@@ -28,18 +53,17 @@ export function TrustedTicker({
       )}
 
       <motion.div
+        ref={containerRef}
         className="flex items-center gap-8 absolute whitespace-nowrap"
-        animate={{ x: "-100%" }}
-        transition={{
-          repeat: Infinity,
-          duration: 20,
-          ease: "linear",
-        }}
+        animate={controls}
       >
-        {[...Array(2)].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={i} className="flex items-center gap-8">
             {logos.map((logo) => (
-              <div key={logo.id} className="relative w-32 h-8 shrink-0">
+              <div
+                key={`${logo.id}-${i}`}
+                className="relative w-32 h-8 shrink-0"
+              >
                 <Image
                   src={
                     logo.url?.startsWith("/")
