@@ -126,7 +126,7 @@ export function LeftPanelContent({
 
   if (step.panelType === "testimonial") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
         <div className="bg-white/10 p-6 rounded-xl">
           <p className="text-lg text-white mb-6">{content.quote}</p>
@@ -152,7 +152,7 @@ export function LeftPanelContent({
 
   if (step.panelType === "features") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <h2 className="text-3xl font-bold text-white">{content.headline}</h2>
         <div className="space-y-4">
           {content.features?.map((feature: any, index: number) => {
@@ -184,7 +184,7 @@ export function LeftPanelContent({
 
   if (step.panelType === "success") {
     return (
-      <div className="space-y-8 max-w-md">
+      <div className="space-y-8 w-full">
         <div className="space-y-4">
           <motion.div
             initial={{ scale: 0 }}
