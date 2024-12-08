@@ -228,7 +228,7 @@ export function SignupModal({
               <div className="flex justify-end pt-4 mt-auto">
                 <Button
                   type="submit"
-                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:bg-black/90 transition-colors duration-200"
+                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
                 >
                   Continue
                 </Button>
@@ -238,7 +238,7 @@ export function SignupModal({
               <div className="flex justify-end pt-4 mt-auto">
                 <Button
                   type="submit"
-                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:bg-black/90 transition-colors duration-200"
+                  className="rounded-full px-8 py-6 text-lg bg-black text-white hover:opacity-80 transition-opacity duration-200"
                 >
                   Submit
                 </Button>
