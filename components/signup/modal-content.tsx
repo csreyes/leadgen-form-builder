@@ -35,7 +35,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setIsMobile(entry.contentRect.width < 640);
+        setIsMobile(entry.contentRect.width < 900);
       }
     });
     observer.observe(document.body);
@@ -162,9 +162,9 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 min-h-screen">
+    <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
       {/* Left Panel */}
-      {(!isMobile || step === 1) && (
+      {!isMobile && (
         <div
           className="relative"
           style={{
@@ -175,7 +175,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 : config.style?.leftPanelColor,
           }}
         >
-          <div className="relative w-full h-full p-12 overflow-y-auto">
+          <div className="relative w-full h-full p-6 sm:p-12 overflow-y-auto">
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={step + "-left"}
@@ -200,12 +200,12 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
 
       {/* Right Panel */}
       <div
-        className="relative min-h-screen sm:min-h-0"
+        className="relative min-h-screen"
         style={{ backgroundColor: config.style?.rightPanelMainColor }}
       >
         <div className="h-full flex flex-col">
           {/* Header Section */}
-          <div className="px-12 pt-10">
+          <div className="px-6 sm:px-12 pt-10">
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 {step > 1 && (
@@ -253,7 +253,7 @@ export function ModalContent({ config, onSubmit }: ModalContentProps) {
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="absolute inset-0 px-12 pt-8 pb-8"
+                className="absolute inset-0 px-6 sm:px-12 pt-8 pb-8"
               >
                 <form
                   onSubmit={handleSubmit}
